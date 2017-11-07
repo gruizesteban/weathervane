@@ -146,6 +146,7 @@ override 'create' => sub {
 
 sub createSingleMongodb {
 	my ( $self, $logPath ) = @_;
+	my $logger = get_logger("Weathervane::Services::MongodbDockerService");
 	my $name     = $self->getParamValue('dockerName');
 	my $host = $self->host;
 	my $hostname = $self->host->hostName;
@@ -549,7 +550,7 @@ sub configure {
 
 }
 
-sub start {
+sub startInstance {
 	my ( $self, $logPath ) = @_;
 	my $appInstance = $self->appInstance;
 
@@ -934,7 +935,7 @@ sub startSingleMongodb {
 	close $dblog;
 }
 
-sub stop {
+sub stopInstance {
 	my ( $self, $logPath ) = @_;
 	my $appInstance = $self->appInstance;
 
@@ -1228,11 +1229,18 @@ override 'remove' => sub {
 };
 
 sub clearDataAfterStart {
+	my ( $self, $logPath ) = @_;
+	my $logger = get_logger("Weathervane::Services::MongodbDockerService");
+	my $name        = $self->getParamValue('dockerName');
+	$logger->debug("clearDataAfterStart for $name");
 }
 
 sub clearDataBeforeStart {
 	my ( $self, $logPath ) = @_;
 	my $hostname         = $self->host->hostName;
+	my $name        = $self->getParamValue('dockerName');
+	my $logger = get_logger("Weathervane::Services::MongodbDockerService");
+	$logger->debug("clearDataBeforeStart for $name");
 	
 	$self->clearBeforeStart(1);
 	

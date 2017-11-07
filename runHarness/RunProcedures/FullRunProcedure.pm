@@ -21,7 +21,7 @@ use Parameters qw(getParamValue);
 use POSIX;
 use JSON;
 use Log::Log4perl qw(get_logger);
-use Utils qw(callMethodOnObjectsParallel callBooleanMethodOnObjectsParallel callMethodsOnObjectParallel);
+use Utils qw(callMethodOnObjectsParamListParallel1 callMethodOnObjectsParallel callBooleanMethodOnObjectsParallel callMethodsOnObjectParallel);
 
 use strict;
 
@@ -120,8 +120,11 @@ override 'run' => sub {
 	## get the config files
 	$self->getConfigFiles();
 
-	## get the stats logs
+	## get the stats files
 	$self->getStatsFiles();
+
+	## get the logs
+	$self->getLogFiles();
 
 	my $sanityPassed = $self->sanityCheckServices($cleanupLogDir);
 	if ($sanityPassed) {
@@ -132,30 +135,19 @@ override 'run' => sub {
 	}
 
 	if ( $self->getParamValue('stopServices') ) {
-		## stop the services
-		$self->stopFrontendServices($cleanupLogDir);
-		$self->stopBackendServices($cleanupLogDir);
 
 		# cleanup the databases
 		$self->cleanData($cleanupLogDir);
 
-		$self->stopDataServices($cleanupLogDir);
-		$self->stopInfrastructureServices($cleanupLogDir);
+		## stop the services
+		my @tiers = qw(frontend backend data infrastructure);
+		callMethodOnObjectsParamListParallel1( "stopServices", [$self], \@tiers, $cleanupLogDir );
+
+		$debug_logger->debug("Unregister port numbers");
 		$self->unRegisterPortNumbers();
 
-		## get the logs
-		$self->getLogFiles();
-
-		$self->removeFrontendServices($cleanupLogDir);
-		$self->removeBackendServices($cleanupLogDir);
-		$self->removeDataServices($cleanupLogDir);
-		$self->removeInfrastructureServices($cleanupLogDir);
 		# clean up old logs and stats
 		$self->cleanup();
-	}
-	else {
-		## get the logs
-		$self->getLogFiles();
 	}
 
 	# Put a file in the output/seqnum directory with the run name
