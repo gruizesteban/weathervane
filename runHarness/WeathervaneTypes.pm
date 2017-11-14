@@ -46,12 +46,13 @@ our %dockerServiceTypes = (
 # Within each type they are started in the given order ad stopped in reverse order
 
 # Map workload to serviceTier to serviceType in each tier
-our %workloadToServiceTypes = ('auction' => (
+our %workloadToServiceTypes = ('auction' => {
 	'infrastructure' => ['configurationManager', 'elasticityService'],
 	'data' => ['dbServer', 'nosqlServer', 'fileServer'],
 	'backend' => ['msgServer', 'coordinationServer', 'appServer', 'webServer'],
 	'frontend' => ['lbServer', 'ipManager'],
-));
+	}
+);
 
 # Valid service implementations for each service type
 our %serviceImpls = (

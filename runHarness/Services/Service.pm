@@ -270,7 +270,7 @@ sub start {
 		$self->getParamValue('instanceNum')
 	);
 
-	my $impl   = $appInstance->getParamValue('workloadImpl');
+	my $impl   = $self->appInstance->getParamValue('workloadImpl');
 	my $suffix = "_W" . $self->getParamValue('workloadNum') . "I" . $self->getParamValue('appInstanceNum');
 
 	my $dockerServiceTypesRef = $WeathervaneTypes::dockerServiceTypes{$impl};
@@ -279,18 +279,18 @@ sub start {
 	if ( $serviceType ~~ @$dockerServiceTypesRef ) {
 		foreach my $service (@$servicesRef) {
 			$logger->debug( "Create " . $service->getDockerName() . "\n" );
-			$service->create($setupLogDir);
+			$service->create($logPath);
 		}
 	}
 
 	foreach my $service (@$servicesRef) {
 		$logger->debug( "Configure " . $service->getDockerName() . "\n" );
-		$service->configure( $setupLogDir, $users, $suffix );
+		$service->configure( $logPath, $users, $suffix );
 	}
 
 	foreach my $service (@$servicesRef) {
 		$logger->debug( "Start " . $service->getDockerName() . "\n" );
-		$service->start($setupLogDir);
+		$service->start($logPath);
 	}
 
 	sleep 15;
