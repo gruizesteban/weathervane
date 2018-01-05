@@ -11,84 +11,86 @@
 # SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-package ClusterFactory;
+package ComputeResource;
 
 use Moose;
 use MooseX::Storage;
-use MooseX::ClassAttribute;
-use Moose::Util qw( apply_all_roles );
-use Hosts::LinuxGuest;
-use Hosts::DockerRole;
-use Hosts::VICHost;
-use Hosts::ESXiHost;
-use Hosts::VirtualCenterHost;
+use StatsParsers::ParseSar qw(parseSar);
 use Parameters qw(getParamValue);
+use Instance;
 use Log::Log4perl qw(get_logger);
+use Utils qw(getIpAddresses getIpAddress);
 
 use namespace::autoclean;
 
 with Storage( 'format' => 'JSON', 'io' => 'File' );
 
-sub getHost {
-	my ( $self, $paramsHashRef ) = @_;
-	my $logger = get_logger("Weathervane::Factories::HostFactory");
-	my $host;	
-	my $isVIC = $paramsHashRef->{'vicHost'};	
-	my $hostname = $paramsHashRef->{'hostName'};
+extends 'Instance';
+
+
+
+override 'initialize' => sub {
+	my ( $self ) = @_;
+	my $console_logger = get_logger("Console");
 	
-	if ($isVIC) {
-		$logger->debug("Creating a VIC Host with hostname $hostname");
-		$host = VICHost->new(
-			'paramHashRef' => $paramsHashRef,);
-	} else {
-		$logger->debug("Creating a Linux Host with hostname $hostname");
-		$host = LinuxGuest->new(
-			'paramHashRef' => $paramsHashRef,);
-	}
-	$host->initialize();
+	super();
 
-	apply_all_roles($host, 'DockerRole');		
+};
 
-	return $host;
+sub stopStatsCollection {
+	my ($self) = @_;
+
 }
 
-sub getVIHost{
-	my ( $self, $paramHashRef) = @_;
-	my $host;
-	my $viType = $paramHashRef->{'virtualInfrastructureType'};
+sub startStatsCollection {
+	my ($self) = @_;
 
-	if ( $viType eq "vsphere" ) {
-		$host = ESXiHost->new(
-			'paramHashRef' => $paramHashRef,
-
-		);
-	}
-	else {
-		die "No matching virtualInfrastructure type available to hostFactory";
-	}
-
-	$host->initialize();
-
-	return $host;
 }
 
-sub getVIMgmtHost {
-	my ( $self, $paramHashRef) = @_;
-	my $host;
-	my $viType = $paramHashRef->{'virtualInfrastructureType'};
-	if ( $viType eq "vsphere" ) {
-		$host = VirtualCenterHost->new(
-			'paramHashRef' => $paramHashRef,
-		);
-	}
-	else {
-		die "No matching virtualInfrastructure type available to hostFactory";
-	}
+sub getLogFiles {
+	my ($self) = @_;
 
-	$host->initialize();
-
-	return $host;
 }
+
+sub getConfigFiles {
+	my ($self) = @_;
+
+}
+
+sub cleanLogFiles {
+	my ($self) = @_;
+	my $logger = get_logger("Weathervane::ComputeResources::ComputeResource");
+	$logger->debug("cleanLogFiles host = ", $self->hostName);
+
+}
+
+sub parseLogFiles {
+	my ($self) = @_;
+
+}
+
+sub getStatsFiles {
+	my ($self) = @_;
+
+}
+
+sub cleanStatsFiles {
+	my ($self) = @_;
+
+}
+
+sub parseStats {
+	my ( $self, $storagePath ) = @_;
+
+}
+
+sub getStatsSummary {
+	my ( $self, $storagePath ) = @_;
+	tie( my %csv, 'Tie::IxHash' );
+
+	return \%csv;
+}
+
 __PACKAGE__->meta->make_immutable;
 
 1;

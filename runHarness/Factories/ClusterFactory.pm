@@ -11,17 +11,13 @@
 # SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-package ClusterFactory;
+package HostFactory;
 
 use Moose;
 use MooseX::Storage;
 use MooseX::ClassAttribute;
 use Moose::Util qw( apply_all_roles );
-use Hosts::LinuxGuest;
-use Hosts::DockerRole;
-use Hosts::VICHost;
-use Hosts::ESXiHost;
-use Hosts::VirtualCenterHost;
+use Clusters::KubernetesCluster;
 use Parameters qw(getParamValue);
 use Log::Log4perl qw(get_logger);
 
@@ -29,66 +25,25 @@ use namespace::autoclean;
 
 with Storage( 'format' => 'JSON', 'io' => 'File' );
 
-sub getHost {
+sub getCluster {
 	my ( $self, $paramsHashRef ) = @_;
 	my $logger = get_logger("Weathervane::Factories::HostFactory");
-	my $host;	
-	my $isVIC = $paramsHashRef->{'vicHost'};	
-	my $hostname = $paramsHashRef->{'hostName'};
+	my $cluster;	
+	my $clusterName = $paramsHashRef->{'clusterName'};
+	my $clusterType = $paramsHashRef->{'clusterType'};
 	
-	if ($isVIC) {
-		$logger->debug("Creating a VIC Host with hostname $hostname");
-		$host = VICHost->new(
-			'paramHashRef' => $paramsHashRef,);
+	if ( $clusterType eq "kubernetes" ) {
+		$logger->debug("Creating a Kubernetes cluster with name $clusterName");
+		$cluster = KubernetesCluster->new(
+				'paramHashRef' => $paramsHashRef,);
 	} else {
-		$logger->debug("Creating a Linux Host with hostname $hostname");
-		$host = LinuxGuest->new(
-			'paramHashRef' => $paramsHashRef,);
+		die "No matching cluster type $clusterType available to ClusterFactory";
 	}
-	$host->initialize();
 
-	apply_all_roles($host, 'DockerRole');		
-
-	return $host;
+	$cluster->initialize();
+	return $cluster;
 }
 
-sub getVIHost{
-	my ( $self, $paramHashRef) = @_;
-	my $host;
-	my $viType = $paramHashRef->{'virtualInfrastructureType'};
-
-	if ( $viType eq "vsphere" ) {
-		$host = ESXiHost->new(
-			'paramHashRef' => $paramHashRef,
-
-		);
-	}
-	else {
-		die "No matching virtualInfrastructure type available to hostFactory";
-	}
-
-	$host->initialize();
-
-	return $host;
-}
-
-sub getVIMgmtHost {
-	my ( $self, $paramHashRef) = @_;
-	my $host;
-	my $viType = $paramHashRef->{'virtualInfrastructureType'};
-	if ( $viType eq "vsphere" ) {
-		$host = VirtualCenterHost->new(
-			'paramHashRef' => $paramHashRef,
-		);
-	}
-	else {
-		die "No matching virtualInfrastructure type available to hostFactory";
-	}
-
-	$host->initialize();
-
-	return $host;
-}
 __PACKAGE__->meta->make_immutable;
 
 1;

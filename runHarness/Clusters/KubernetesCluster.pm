@@ -11,42 +11,26 @@
 # SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-package VIHost;
+package KubernetesCluster;
 
 use Moose;
 use MooseX::Storage;
-use ComputeResource::Host;
+use ComputeResource::Cluster;
 use VirtualInfrastructures::VirtualInfrastructure;
+use WeathervaneTypes;
 
 use namespace::autoclean;
 
 with Storage( 'format' => 'JSON', 'io' => 'File' );
 
-extends 'Host';
-
-has 'virtualInfrastructure' => (
-	is  => 'rw',
-	isa => 'VirtualInfrastructure',
-);
+extends 'Cluster';
 
 override 'initialize' => sub {
 	my ( $self, $paramHashRef ) = @_;
-
+		
 	super();
 };
 
-sub setVirtualInfrastructure {
-	my ( $self, $vi ) = @_;
-	$self->virtualInfrastructure($vi);
-}
-
-sub getStatsSummary {
-	my ($self, $statsFileDir, $users) = @_;
-	tie (my %csv, 'Tie::IxHash');
-	%csv = ();
-	
-	return \%csv;
-}
 
 __PACKAGE__->meta->make_immutable;
 

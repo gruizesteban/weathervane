@@ -24,7 +24,7 @@ with Storage( 'format' => 'JSON', 'io' => 'File' );
 
 use namespace::autoclean;
 use Log::Log4perl qw(get_logger);
-
+use ComputeResources::ComputeResource;
 use Hosts::Host;
 use WeathervaneTypes;
 use Instance;
@@ -54,7 +54,7 @@ has 'appInstance' => (
 # Attributes for a specific instance
 has 'host' => (
 	is  => 'rw',
-	isa => 'Host',
+	isa => 'ComputeResource',
 );
 
 has 'dockerConfigHashRef' => (
@@ -457,7 +457,7 @@ sub getImpl {
 	return $self->getParamValue($serviceType . 'Impl');
 }
 
-# This method returns true is both this and the other service are
+# This method returns true if both this and the other service are
 # running dockerized on the same Docker host and network but are not
 # using docker host networking
 sub corunningDockerized {

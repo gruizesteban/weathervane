@@ -15,17 +15,17 @@ package Host;
 
 use Moose;
 use MooseX::Storage;
-use StatsParsers::ParseSar qw(parseSar);
 use Parameters qw(getParamValue);
 use Instance;
 use Log::Log4perl qw(get_logger);
 use Utils qw(getIpAddresses getIpAddress);
+use ComputeResources::ComputeResource;
 
 use namespace::autoclean;
 
 with Storage( 'format' => 'JSON', 'io' => 'File' );
 
-extends 'Instance';
+extends 'ComputeResource';
 
 has 'hostName' => (
 	is  => 'rw',
@@ -158,59 +158,6 @@ sub getCpuMemConfig {
 	my ($self) = @_;
 }
 
-sub stopStatsCollection {
-	my ($self) = @_;
-
-}
-
-sub startStatsCollection {
-	my ($self) = @_;
-
-}
-
-sub getLogFiles {
-	my ($self) = @_;
-
-}
-
-sub getConfigFiles {
-	my ($self) = @_;
-
-}
-
-sub cleanLogFiles {
-	my ($self) = @_;
-	my $logger = get_logger("Weathervane::Hosts::Host");
-	$logger->debug("cleanLogFiles host = ", $self->hostName);
-
-}
-
-sub parseLogFiles {
-	my ($self) = @_;
-
-}
-
-sub getStatsFiles {
-	my ($self) = @_;
-
-}
-
-sub cleanStatsFiles {
-	my ($self) = @_;
-
-}
-
-sub parseStats {
-	my ( $self, $storagePath ) = @_;
-
-}
-
-sub getStatsSummary {
-	my ( $self, $storagePath ) = @_;
-	tie( my %csv, 'Tie::IxHash' );
-
-	return \%csv;
-}
 
 #-------------------------------
 # Two hosts are equal if they have the same IP address
