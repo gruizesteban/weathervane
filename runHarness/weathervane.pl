@@ -133,23 +133,29 @@ sub createCluster {
 
 sub createComputeResource {
 	my ($paramsHashRef, $instanceParamHashRef, $runProcedure, $instance, $clusterNameToClusterHashRef, $ipToHostHashRef, $useAllSuffixes, $isNonDocker) = @_;
+	my $weathervane_logger = get_logger("Weathervane");
 
-	$logger->debug("createComputeResource  ");
+	my $json = JSON->new;
+	$json = $json->relaxed(1);
+	$json = $json->pretty(1);
+	$json = $json->max_depth(4096);
+
+	$weathervane_logger->debug("createComputeResource  ");
 	
 	my $retArrayRef;
 	if ($instanceParamHashRef->{"clusterName"}) {
 		my $clusterParamHashRef = Parameters::getSingletonInstanceParamHashRef( $paramsHashRef, $instanceParamHashRef,
 			"clusters", $useAllSuffixes );
-		$logger->debug( "For cluster ", $instanceParamHashRef->{'clusterName'}, " the Param hash ref is:" );
+		$weathervane_logger->debug( "For cluster ", $instanceParamHashRef->{'clusterName'}, " the Param hash ref is:" );
 		my $tmp = $json->encode($clusterParamHashRef);
-		$logger->debug($tmp);
+		$weathervane_logger->debug($tmp);
 		$retArrayRef = createCluster( $clusterParamHashRef, $runProcedure, $instance, $clusterNameToClusterHashRef );		
 	} else {
 		my $hostParamHashRef = Parameters::getSingletonInstanceParamHashRef( $paramsHashRef, $instanceParamHashRef,
 			"hosts", $useAllSuffixes );
-		$logger->debug( "For host ", $hostParamHashRef->{'hostName'}, " the Param hash ref is:" );
+		$weathervane_logger->debug( "For host ", $hostParamHashRef->{'hostName'}, " the Param hash ref is:" );
 		my $tmp = $json->encode($hostParamHashRef);
-		$logger->debug($tmp);
+		$weathervane_logger->debug($tmp);
 		$retArrayRef = createHost( $hostParamHashRef, $runProcedure, $instance, $ipToHostHashRef );
 
 		my ($createdNew, $host) = @$retArrayRef;
