@@ -134,11 +134,13 @@ sub createCluster {
 sub createComputeResource {
 	my ($paramsHashRef, $instanceParamHashRef, $runProcedure, $instance, $clusterNameToClusterHashRef, $ipToHostHashRef, $useAllSuffixes, $isNonDocker) = @_;
 
+	$logger->debug("createComputeResource  ");
+	
 	my $retArrayRef;
 	if ($instanceParamHashRef->{"clusterName"}) {
 		my $clusterParamHashRef = Parameters::getSingletonInstanceParamHashRef( $paramsHashRef, $instanceParamHashRef,
 			"clusters", $useAllSuffixes );
-		$logger->debug( "For cluster ", $hostParamHashRef->{'clusterName'}, " the Param hash ref is:" );
+		$logger->debug( "For cluster ", $instanceParamHashRef->{'clusterName'}, " the Param hash ref is:" );
 		my $tmp = $json->encode($clusterParamHashRef);
 		$logger->debug($tmp);
 		$retArrayRef = createCluster( $clusterParamHashRef, $runProcedure, $instance, $clusterNameToClusterHashRef );		
