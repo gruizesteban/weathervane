@@ -15,7 +15,7 @@ package KubernetesCluster;
 
 use Moose;
 use MooseX::Storage;
-use ComputeResource::Cluster;
+use ComputeResources::Cluster;
 use VirtualInfrastructures::VirtualInfrastructure;
 use WeathervaneTypes;
 

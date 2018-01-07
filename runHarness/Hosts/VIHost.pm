@@ -15,7 +15,7 @@ package VIHost;
 
 use Moose;
 use MooseX::Storage;
-use ComputeResource::Host;
+use ComputeResources::Host;
 use VirtualInfrastructures::VirtualInfrastructure;
 
 use namespace::autoclean;
