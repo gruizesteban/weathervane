@@ -25,7 +25,6 @@ with Storage( 'format' => 'JSON', 'io' => 'File' );
 use namespace::autoclean;
 use Log::Log4perl qw(get_logger);
 use ComputeResources::ComputeResource;
-use Hosts::Host;
 use WeathervaneTypes;
 use Instance;
 
