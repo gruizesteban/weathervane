@@ -31,6 +31,26 @@ override 'initialize' => sub {
 	super();
 };
 
+override 'registerService' => sub {
+	my ( $self, $serviceRef ) = @_;
+	my $console_logger = get_logger("Console");
+	my $logger         = get_logger("Weathervane::Clusters::KubernetesCluster");
+	my $servicesRef    = $self->servicesRef;
+
+	my $dockerName = $serviceRef->getDockerName();
+	$logger->debug( "Registering service $dockerName with cluster ",
+		$self->clusterName );
+
+	if ( $serviceRef->useDocker() ) {
+			$console_logger->error( "Service $dockerName running on cluster ",
+				$self->clusterName, " should not have useDocker set to true." );
+			exit(-1);
+	}
+
+	push @$servicesRef, $serviceRef;
+
+};
+
 
 __PACKAGE__->meta->make_immutable;
 

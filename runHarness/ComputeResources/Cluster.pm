@@ -32,6 +32,12 @@ has 'clusterName' => (
 	isa => 'Str',
 );
 
+has 'servicesRef' => (
+	is      => 'rw',
+	default => sub { [] },
+	isa     => 'ArrayRef[Service]',
+);
+
 override 'initialize' => sub {
 	my ( $self ) = @_;
 	my $console_logger = get_logger("Console");

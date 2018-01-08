@@ -37,6 +37,14 @@ override 'initialize' => sub {
 
 };
 
+sub registerService {
+	my ($self, $serviceRef) = @_;
+	my $console_logger = get_logger("Console");
+	
+	$console_logger->error("registerService called on a Host object that does not support that method.");
+	exit(-1);	
+}
+
 sub stopStatsCollection {
 	my ($self) = @_;
 
