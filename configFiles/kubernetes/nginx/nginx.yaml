@@ -10,7 +10,7 @@ data:
   IMAGESTORETYPE: "mongodb"
   HTTPPORT: 9080
   HTTPSPORT: 9443
-  APPSERVERS: "AuctionApp1:8080"
+  APPSERVERS: "tomcat:8080"
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
