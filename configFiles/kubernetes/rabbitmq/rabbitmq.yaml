@@ -4,7 +4,7 @@ metadata:
   name: rabbitmq-config
 data: 
   RABBITMQ_NODE_PORT: "5672"
-  RABBITMQ_PEER_PORT: "25672"
+  RABBITMQ_DIST_PORT: "25672"
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
