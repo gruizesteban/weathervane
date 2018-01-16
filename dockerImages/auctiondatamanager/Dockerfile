@@ -1,7 +1,6 @@
 FROM namespace/weathervane-centos7:version
 MAINTAINER hrosenbe@vmware.com
 
-COPY mongodb.repo /etc/yum.repos.d/mongo.repo
 COPY entrypoint.sh /entrypoint.sh
 COPY dbLoader.jar /dbLoader.jar
 COPY dbLoaderLibs /dbLoaderLibs
@@ -15,9 +14,6 @@ COPY items.json /items.json
 	
 RUN yum install -y java-1.8.0-openjdk && \
 	yum install -y java-1.8.0-openjdk-devel && \
-	yum install -y mongodb-org-shell && \
-	yum localinstall -y http://yum.postgresql.org/9.3/redhat/rhel-7-x86_64/pgdg-centos93-9.3-3.noarch.rpm && \
-	yum install -y postgresql93 && \
     yum -y clean all && \
     chmod +x /entrypoint.sh
 
