@@ -43,7 +43,7 @@ has 'host' => (
 override 'initialize' => sub {
 	my ($self) = @_;
 	
-	$self->namespace("AuctionW" . $self->getParamValue('workloadNum') . "I" . $self->getParamValue('appInstanceNum'));
+	$self->namespace("auctionw" . $self->getParamValue('workloadNum') . "i" . $self->getParamValue('appInstanceNum'));
 	
 	
 	super();
