@@ -48,107 +48,86 @@ override 'registerPortsWithHost' => sub {
 	my ($self) = @_;
 	my $logger = get_logger("Weathervane::Services::Service");	
 	
-	foreach my $key (keys %{$self->portMap}) {
-		my $portNumber = $self->portMap->{$key};
-		$logger->debug("For service ", $self->getDockerName(), ", registering port $portNumber for key $key");
-		if ($portNumber) {
- 			$self->host->registerPortNumber($portNumber, $self);
-		}				
-	}
 
 };
 
 override 'unRegisterPortsWithHost' => sub {
 	my ($self) = @_;
 	my $logger = get_logger("Weathervane::Services::Service");	
-	
-	foreach my $key (keys %{$self->portMap}) {
-		my $portNumber = $self->portMap->{$key};
-		$logger->debug("For service ", $self->getDockerName(), ", unregistering port $portNumber for key $key");
-		if ($portNumber) {
- 			$self->host->unRegisterPortNumber($portNumber);
-		}				
-	}
 
 };
 
 
-override 'start' => sub {
-	my ($self, $serviceType, $users, $logPath)            = @_;
-	my $logger = get_logger("Weathervane::Service::Service");
-	$logger->debug(
-		"start serviceType $serviceType, Workload ",
-		$self->getParamValue('workloadNum'),
-		", appInstance ",
-		$self->getParamValue('instanceNum')
-	);
-
-	my $impl   = $self->appInstance->getParamValue('workloadImpl');
-	my $suffix = "_W" . $self->getParamValue('workloadNum') . "I" . $self->getParamValue('appInstanceNum');
-
-	my $dockerServiceTypesRef = $WeathervaneTypes::dockerServiceTypes{$impl};
-	my $servicesRef = $self->appInstance->getActiveServicesByType($serviceType);
-
-	if ( $serviceType ~~ @$dockerServiceTypesRef ) {
-		foreach my $service (@$servicesRef) {
-			$logger->debug( "Create " . $service->getDockerName() . "\n" );
-			$service->create($logPath);
-		}
-	}
-
-	foreach my $service (@$servicesRef) {
-		$logger->debug( "Configure " . $service->getDockerName() . "\n" );
-		$service->configure( $logPath, $users, $suffix );
-	}
-
-	foreach my $service (@$servicesRef) {
-		$logger->debug( "Start " . $service->getDockerName() . "\n" );
-		$service->startInstance($logPath);
-	}
-	
-	sleep 15;
-	
-};
-
-
+# Stop all of the services needed for the Nginx service
 override 'stop' => sub {
 	my ($self, $serviceType, $logPath)            = @_;
-	my $logger = get_logger("Weathervane::Service::Service");
-	$logger->debug(
-		"stop serviceType $serviceType, Workload ",
-		$self->getParamValue('workloadNum'),
-		", appInstance ",
-		$self->getParamValue('instanceNum')
-	);
+	my $logger = get_logger("Weathervane::Services::KubernetesService");
+	my $console_logger   = get_logger("Console");
 
-	my $impl   = $self->appInstance->getParamValue('workloadImpl');
-	my $suffix = "_W" . $self->getParamValue('workloadNum') . "I" . $self->getParamValue('appInstanceNum');
-
-	my $dockerServiceTypesRef = $WeathervaneTypes::dockerServiceTypes{$impl};
-	my $servicesRef = $self->appInstance->getActiveServicesByType($serviceType);
-
-	foreach my $service (@$servicesRef) {
-		$logger->debug( "Stop " . $service->getDockerName() . "\n" );
-		$service->stopInstance( $logPath );
-	}
-
-	if ( $serviceType ~~ @$dockerServiceTypesRef ) {
-		foreach my $service (@$servicesRef) {
-			$logger->debug( "Remove " . $service->getDockerName() . "\n" );
-			$service->remove($logPath);
-		}
-	}
-
-	foreach my $service (@$servicesRef) {
-		$logger->debug( "CleanLogFiles " . $service->getDockerName() . "\n" );
-		$service->cleanLogFiles();
-		$logger->debug( "CleanStatsFiles " . $service->getDockerName() . "\n" );
-		$service->cleanStatsFiles();
-	}
-
-	sleep 15;
+	my $impl = $self->getImpl();
 	
+	
+	my $time = `date +%H:%M`;
+	chomp($time);
+	my $logName     = "$logPath/Stop${impl}Kubernetes-$time.log";
+	my $appInstance = $self->appInstance;
+	
+	$logger->debug("$impl kubernetes Stop");
+	
+	my $log;
+	open( $log, ">$logName" )
+	  || die "Error opening /$logName:$!";
+	print $log $self->meta->name . " In KubernetesService::stop for $impl\n";
+		
+	my $cluster = $self->host;
+	
+	$cluster->kubernetesDelete("configMap", "$impl-config", 0, $self->namespace);
+	$cluster->kubernetesDelete("deployment", "$impl", 0, $self->namespace);
+	$cluster->kubernetesDelete("statefulset", "$impl", 0, $self->namespace);
+	$cluster->kubernetesDelete("service", "$impl", 0, $self->namespace);
+	$cluster->kubernetesDelete("ingress", "$impl", 0, $self->namespace);
+		
+	close $log;
 };
+
+# Configure and Start all of the services needed for the 
+# Nginx service
+override 'start' => sub {
+	my ($self, $serviceType, $users, $logPath)            = @_;
+	my $logger = get_logger("Weathervane::Services::KubernetesService");
+	my $console_logger   = get_logger("Console");
+	my $time = `date +%H:%M`;
+	chomp($time);
+	my $logName     = "$logPath/Start${impl}Kubernetes-$time.log";
+	my $appInstance = $self->appInstance;
+	
+	$logger->debug("$impl kubernetes Start");
+	
+	my $log;
+	open( $log, ">$logName" )
+	  || die "Error opening /$logName:$!";
+	print $log $self->meta->name . " In KubernetesService::start for $impl\n";
+			
+	# Create the yaml file for the service
+	$self->configure($log, $serviceType, $users);
+			
+	my $cluster = $self->host;
+	my $namespace = $self->namespace;
+	$cluster->kubernetesApply("/tmp/${impl}-${namespace}.yaml", $namespace);
+	
+	close $log;
+
+};
+
+
+sub setPortNumbers {
+	my ($self)          = @_;
+}
+
+
+sub setExternalPortNumbers {
+	my ($self)          = @_;
+}
 
 override 'isReachable ' => sub {
 	my ($self, $fileout) = @_;

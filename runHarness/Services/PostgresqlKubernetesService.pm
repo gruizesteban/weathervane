@@ -11,7 +11,7 @@
 # SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-package PostgresqlDockerService;
+package PostgresqlKubernetesService;
 
 use Moose;
 use MooseX::Storage;
@@ -37,164 +37,6 @@ override 'initialize' => sub {
 	my ($self) = @_;
 
 	super();
-};
-
-sub stopInstance {
-	my ( $self, $logPath ) = @_;
-
-	my $hostname         = $self->host->hostName;
-	my $name             = $self->getParamValue('dockerName');
-	my $time     = `date +%H:%M`;
-	chomp($time);
-	my $logName          = "$logPath/StopPostgresqlDocker-$hostname-$name-$time.log";
-	my $logger = get_logger("Weathervane::Services::PostgresqlDockerService");
-	$logger->debug("stop PostgresqlDockerService");
-
-	my $applog;
-	open( $applog, ">$logName" )
-	  || die "Error opening /$logName:$!";
-
-	$self->host->dockerStop( $applog, $name );
-
-	close $applog;
-}
-
-override 'create' => sub {
-	my ( $self, $logPath ) = @_;
-
-	my $name             = $self->getParamValue('dockerName');
-	my $hostname         = $self->host->hostName;
-	my $host         = $self->host;
-	my $impl             = $self->getImpl();
-	my $logDir           = $self->getParamValue('postgresqlLogDir');
-	my $sshConnectString = $self->host->sshConnectString;
-	my $logger = get_logger("Weathervane::Services::PostgresqlService");
-
-	#	`$sshConnectString chmod -R 777 $logDir`;
-	my $time     = `date +%H:%M`;
-	chomp($time);
-	my $logName = "$logPath/Create" . ucfirst($impl) . "Docker-$hostname-$name-$time.log";
-	my $applog;
-	open( $applog, ">$logName" )
-	  || die "Error opening /$logName:$!";
-
-	# Map the log and data volumes to the appropriate host directories
-	my %volumeMap;
-	my $hostDataDir = $self->getParamValue('postgresqlDataDir');
-	if ($host->getParamValue('postgresqlUseNamedVolumes') || $host->getParamValue('vicHost')) {
-		$hostDataDir = $self->getParamValue('postgresqlDataVolume');
-		# use named volumes.  Create volume if it doesn't exist
-		if (!$host->dockerVolumeExists($applog, $hostDataDir)) {
-			# Create the volume
-			my $volumeSize = 0;
-			if ($host->getParamValue('vicHost')) {
-				$volumeSize = $self->getParamValue('postgresqlDataVolumeSize');
-			}
-			$host->dockerVolumeCreate($applog, $hostDataDir, $volumeSize);
-		}
-
-		$logDir           = $self->getParamValue('postgresqlLogVolume');
-		if (!$host->dockerVolumeExists($applog, $logDir)) {
-			# Create the volume
-			my $volumeSize = 0;
-			if ($host->getParamValue('vicHost')) {
-				$volumeSize = $self->getParamValue('postgresqlLogVolumeSize');
-			}
-			$host->dockerVolumeCreate($applog, $logDir, $volumeSize);
-		}
-	}
-	$volumeMap{"/mnt/dbData/postgresql"} = $hostDataDir;
-	$volumeMap{"/mnt/dbLogs/postgresql"} = $logDir;
-
-	my %envVarMap;
-	$envVarMap{"POSTGRES_USER"}     = "auction";
-	$envVarMap{"POSTGRES_PASSWORD"} = "auction";
-	
-	$envVarMap{"POSTGRESPORT"} = $self->internalPortMap->{$impl};
-
-	if (   ( exists $self->dockerConfigHashRef->{'memory'} )
-		&&  $self->dockerConfigHashRef->{'memory'}  )
-	{
-		my $memString = $self->dockerConfigHashRef->{'memory'};
-		$logger->debug("docker memory is set to $memString, using this to tune postgres.");
-		$memString =~ /(\d+)\s*(\w)/;
-		$envVarMap{"POSTGRESTOTALMEM"} = $1;
-		$envVarMap{"POSTGRESTOTALMEMUNIT"} = $2;
-	} else {
-		$envVarMap{"POSTGRESTOTALMEM"} = 0;
-		$envVarMap{"POSTGRESTOTALMEMUNIT"} = 0;		
-	}
-	$envVarMap{"POSTGRESSHAREDBUFFERS"} = $self->getParamValue('postgresqlSharedBuffers');		
-	$envVarMap{"POSTGRESSHAREDBUFFERSPCT"} = $self->getParamValue('postgresqlSharedBuffersPct');		
- 	$envVarMap{"POSTGRESEFFECTIVECACHESIZE"} = $self->getParamValue('postgresqlEffectiveCacheSize');
- 	$envVarMap{"POSTGRESEFFECTIVECACHESIZEPCT"} = $self->getParamValue('postgresqlEffectiveCacheSizePct');
- 	$envVarMap{"POSTGRESMAXCONNECTIONS"} = $self->getParamValue('postgresqlMaxConnections');
- 	
-	# Create the container
-	my %portMap;
-	my $directMap = 0;
-
-	my $cmd        = "";
-	my $entryPoint = "";
-
-	foreach my $key ( keys %{ $self->internalPortMap } ) {
-		my $port = $self->internalPortMap->{$key};
-		$portMap{$port} = $port;
-	}
-	$self->host->dockerRun( $applog, $name, $impl, $directMap, \%portMap, \%volumeMap, \%envVarMap,
-		$self->dockerConfigHashRef, $entryPoint, $cmd, $self->needsTty );
-
-	close $applog;
-};
-
-sub startInstance {
-	my ( $self, $logPath ) = @_;
-	my $logger = get_logger("Weathervane::Services::PostgresqlService");
-	my $hostname         = $self->host->hostName;
-	my $name             = $self->getParamValue('dockerName');
-	my $time     = `date +%H:%M`;
-	chomp($time);
-	my $logName          = "$logPath/StartPostgresqlDocker-$hostname-$name-$time.log";
-
-	my $applog;
-	open( $applog, ">$logName" )
-	  || die "Error opening /$logName:$!";
-
-	my $portMapRef = $self->host->dockerPort($name);
-
-	if ( $self->host->dockerNetIsHostOrExternal($self->getParamValue('dockerNet') )) {
-
-		# For docker host networking, external ports are same as internal ports
-		$self->portMap->{ $self->getImpl() } = $self->internalPortMap->{ $self->getImpl() };
-	}
-	else {
-
-		# For bridged networking, ports get assigned at start time
-		$self->portMap->{ $self->getImpl() } = $portMapRef->{ $self->internalPortMap->{ $self->getImpl() } };
-	}
-	$self->registerPortsWithHost();
-
-	$self->host->startNscd();
-
-	close $applog;
-}
-
-override 'remove' => sub {
-	my ( $self, $logPath ) = @_;
-
-	my $name     = $self->getParamValue('dockerName');
-	my $hostname = $self->host->hostName;
-	my $time     = `date +%H:%M`;
-	chomp($time);
-	my $logName  = "$logPath/RemovePostgresqlDocker-$hostname-$name-$time.log";
-
-	my $applog;
-	open( $applog, ">$logName" )
-	  || die "Error opening /$logName:$!";
-
-	$self->host->dockerStopAndRemove( $applog, $name );
-
-	close $applog;
 };
 
 sub clearDataBeforeStart {
@@ -226,6 +68,72 @@ sub clearDataAfterStart {
 
 }
 
+sub configure {
+	my ( $self, $dblog, $serviceType, $users, $numShards, $numReplicas ) = @_;
+	my $logger = get_logger("Weathervane::Services::PostgresqlKubernetesService");
+	$logger->debug("Configure Postgresql kubernetes");
+	print $dblog "Configure Postgresql Kubernetes\n";
+
+	my $namespace = $self->namespace;	
+	my $configDir        = $self->getParamValue('configDir');
+
+	my $totalMemory;
+	my $totalMemoryUnit;
+	if (   ( exists $self->dockerConfigHashRef->{'memory'} )
+		&&  $self->dockerConfigHashRef->{'memory'}  )
+	{
+		my $memString = $self->dockerConfigHashRef->{'memory'};
+		$logger->debug("docker memory is set to $memString, using this to tune postgres.");
+		$memString =~ /(\d+)\s*(\w)/;
+		$totalMemory = $1;
+		$totalMemoryUnit = $2;
+	} else {
+		$totalMemory = 0;
+		$totalMemoryUnit = 0;		
+	}
+
+	open( FILEIN,  "$configDir/kubernetes/postgresql.yaml" ) or die "$configDir/kubernetes/postgresql.yaml: $!\n";
+	open( FILEOUT, ">/tmp/postgresql-$namespace.yaml" )             or die "Can't open file /tmp/postgresql-$namespace.yaml: $!\n";
+	
+	while ( my $inline = <FILEIN> ) {
+
+		if ( $inline =~ /POSTGRESTOTALMEM/ ) {
+			print FILEOUT "POSTGRESTOTALMEM: $totalMemory\n";
+		}
+		elsif ( $inline =~ /POSTGRESTOTALMEMUNIT/ ) {
+			print FILEOUT "POSTGRESTOTALMEMUNIT: $totalMemoryUnit\n";
+		}
+		elsif ( $inline =~ /POSTGRESSHAREDBUFFERS/ ) {
+			print FILEOUT "POSTGRESSHAREDBUFFERS: " . $self->getParamValue('postgresqlSharedBuffers') . "\n";
+		}
+		elsif ( $inline =~ /POSTGRESSHAREDBUFFERSPCT/ ) {
+			print FILEOUT "POSTGRESSHAREDBUFFERSPCT: " . $self->getParamValue('postgresqlSharedBuffersPct') . "\n";
+		}
+		elsif ( $inline =~ /POSTGRESEFFECTIVECACHESIZE/ ) {
+			print FILEOUT "POSTGRESEFFECTIVECACHESIZE: \"" . $self->getParamValue('postgresqlEffectiveCacheSize') . "\"\n";
+		}
+		elsif ( $inline =~ /POSTGRESEFFECTIVECACHESIZEPCT/ ) {
+			print FILEOUT "POSTGRESEFFECTIVECACHESIZEPCT: \"" . $self->getParamValue('postgresqlEffectiveCacheSizePct') . "\"\n";
+		}
+		elsif ( $inline =~ /POSTGRESMAXCONNECTIONS/ ) {
+			print FILEOUT "POSTGRESMAXCONNECTIONS: \"" . $self->getParamValue('postgresqlMaxConnections') . "\"\n";
+		}
+		elsif ( $inline =~ /(\s+)imagePullPolicy/ ) {
+			print FILEOUT "${1}imagePullPolicy: " . $self->appInstance->imagePullPolicy . "\n";
+		}
+		else {
+			print FILEOUT $inline;
+		}
+
+	}
+	
+	close FILEIN;
+	close FILEOUT;
+	
+		
+
+}
+
 sub isUp {
 	my ( $self, $fileout ) = @_;
 	return $self->isRunning($fileout);
@@ -237,99 +145,6 @@ sub isRunning {
 	my $name = $self->getParamValue('dockerName');
 
 	return $self->host->dockerIsRunning( $fileout, $name );
-
-}
-
-sub setPortNumbers {
-	my ($self) = @_;
-
-	my $serviceType    = $self->getParamValue('serviceType');
-	my $impl           = $self->getParamValue( $serviceType . "Impl" );
-	my $portMultiplier = $self->appInstance->getNextPortMultiplierByServiceType($serviceType);
-	my $portOffset     = $self->getParamValue( $serviceType . 'PortStep' ) * $portMultiplier;
-	$self->internalPortMap->{$impl} = $self->getParamValue('postgresqlPort') + $portOffset;
-}
-
-sub setExternalPortNumbers {
-	my ($self) = @_;
-	
-	my $name = $self->getParamValue('dockerName');
-	my $portMapRef = $self->host->dockerPort($name);
-
-	if ( $self->host->dockerNetIsHostOrExternal($self->getParamValue('dockerNet') )) {
-
-		# For docker host networking, external ports are same as internal ports
-		$self->portMap->{ $self->getImpl() } = $self->internalPortMap->{ $self->getImpl() };
-	}
-	else {
-
-		# For bridged networking, ports get assigned at start time
-		$self->portMap->{ $self->getImpl() } = $portMapRef->{ $self->internalPortMap->{ $self->getImpl() } };
-	}
-}
-
-sub configure {
-	my ( $self, $logPath, $users, $suffix ) = @_;
-
-}
-
-sub stopStatsCollection {
-	my ($self)      = @_;
-	my $hostname    = $self->host->hostName;
-	my $name        = $self->getParamValue('dockerName');
-	my $serviceType = $self->getParamValue('serviceType');
-	my $impl        = $self->getParamValue( $serviceType . "Impl" );
-	my $port        = $self->internalPortMap->{$impl};
-
-	my $logName = "/tmp/PostgresqlStatsEndOfSteadyState-$hostname-$name.log";
-
-	my $applog;
-	open( $applog, ">$logName" ) or die "Error opening $logName:$!";
-	print $applog "Getting end of steady-state stats from PortgreSQL\n";
-	$self->host->dockerExec($applog, $name, "perl /dumpStats.pl");
-
-	close $applog;
-
-}
-
-sub startStatsCollection {
-	my ( $self, $intervalLengthSec, $numIntervals ) = @_;
-	my $hostname    = $self->host->hostName;
-	my $name        = $self->getParamValue('dockerName');
-	my $serviceType = $self->getParamValue('serviceType');
-	my $impl        = $self->getParamValue( $serviceType . "Impl" );
-	my $port        = $self->internalPortMap->{$impl};
-
-	my $logName = "/tmp/PostgresqlStartStatsCollection-$hostname-$name.log";
-
-	my $applog;
-	open( $applog, ">$logName" ) or die "Error opening $logName:$!";
-
-	print $applog "Getting start of steady-state stats from PortgreSQL\n";
-	$self->host->dockerExec($applog, $name, "perl /dumpStats.pl");
-
-	close $applog;
-}
-
-sub getStatsFiles {
-	my ( $self, $destinationPath ) = @_;
-	my $hostname = $self->host->hostName;
-	my $name     = $self->getParamValue('dockerName');
-
-	my $logName = "/tmp/PostgresqlStatsEndOfSteadyState-$hostname-$name.log";
-
-	my $out = `cp $logName $destinationPath/. 2>&1`;
-
-}
-
-sub cleanStatsFiles {
-	my ($self)   = @_;
-	my $hostname = $self->host->hostName;
-	my $name     = $self->getParamValue('dockerName');
-
-	my $logName = "/tmp/PostgresqlStatsEndOfSteadyState-$hostname-$name.log";
-
-	my $out = `rm -f $logName 2>&1`;
 
 }
 

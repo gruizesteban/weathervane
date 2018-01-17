@@ -11,13 +11,13 @@
 # SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-package MongodbService;
+package MongodbKubernetesService;
 
 use Moose;
 use MooseX::Storage;
 use MooseX::ClassAttribute;
 
-use Services::Service;
+use Services::KubernetesService;
 use Parameters qw(getParamValue);
 use POSIX;
 use Log::Log4perl qw(get_logger);
@@ -26,7 +26,7 @@ use namespace::autoclean;
 
 with Storage( 'format' => 'JSON', 'io' => 'File' );
 
-extends 'Service';
+extends 'KubernetesService';
 
 has '+name' => ( default => 'MongoDB', );
 
@@ -138,6 +138,7 @@ override 'stop' => sub {
 	$cluster->kubernetesDelete("statefulSet", "mongod", 0, $self->namespace);
 	$cluster->kubernetesDelete("service", "mongod", 0, $self->namespace);
 		
+	close $dblog;
 };
 
 # Configure and Start all of the services needed for the 
@@ -164,8 +165,6 @@ override 'start' => sub {
 	}
 	
 	# Set up the configuration files for all of the hosts to be part of the service
-	my $numShards = $self->numNosqlShards;
-	my $numReplicas = $self->numNosqlReplicas;
 	my $workloadNum = $self->getParamValue('workloadNum');
 	my $appInstanceNum = $self->getParamValue('appInstanceNum');
 	my $suffix = "W${workloadNum}I${appInstanceNum}";
@@ -211,37 +210,29 @@ override 'start' => sub {
 	my $cluster = $self->host;
 	$cluster->kubernetesApply("/tmp/mongod${suffix}.yaml", $self->namespace);
 	
+	close $dblog;
 
 };
 
 sub configure {
-	my ( $self, $dblog, $serviceType, $users, $numShards, $numReplicas ) = @_;
+	my ( $self, $dblog, $serviceType, $users ) = @_;
 	my $logger = get_logger("Weathervane::Services::MongodbService");
 	$logger->debug("Configure mongodb kubernetes");
 	print $dblog "Configure MongoDB Kubernetes\n";
 
-	my $workloadNum = $self->getParamValue('workloadNum');
-	my $appInstanceNum = $self->getParamValue('appInstanceNum');
-	my $suffix = "W${workloadNum}I${appInstanceNum}";
+	my $namespace = $self->namespace;
+	my $numShards = $self->numNosqlShards;
+	my $numReplicas = $self->numNosqlReplicas;
 	
 	my $configDir        = $self->getParamValue('configDir');
 
-	open( FILEIN,  "$configDir/kubernetes/mongodb/mongod.yaml" ) or die "$configDir/kubernetes/mongodb/mongod.yaml: $!\n";
-	open( FILEOUT, ">/tmp/mongod${suffix}.yaml" )             or die "Can't open file /tmp/mongod${suffix}.yaml: $!\n";
+	open( FILEIN,  "$configDir/kubernetes/mongodb.yaml" ) or die "$configDir/kubernetes/mongodb.yaml: $!\n";
+	open( FILEOUT, ">/tmp/mongodb-$namespace.yaml" )             or die "Can't open file /tmp/mongodb-$namespace.yaml: $!\n";
 	
 	while ( my $inline = <FILEIN> ) {
 
 		if ( $inline =~ /CLEARBEFORESTART/ ) {
 			print FILEOUT "CLEARBEFORESTART: \"" . $self->clearBeforeStart . ""\"\n";
-		}
-		elsif ( $inline =~ /MONGODPORT/ ) {
-			print FILEOUT "MONGODPORT: \"27017\"\n";
-		}
-		elsif ( $inline =~ /MONGODPORT/ ) {
-			print FILEOUT "MONGODPORT: \"27017\"\n";
-		}
-		elsif ( $inline =~ /MONGOCPORT/ ) {
-			print FILEOUT "MONGODPORT: \"27019\"\n";
 		}
 		elsif ( $inline =~ /NUMSHARDS/ ) {
 			print FILEOUT "NUMSHARDS: \"$numShards"\"\n";
@@ -254,6 +245,9 @@ sub configure {
 		}
 		elsif ( $inline =~ /ISMONGOS/ ) {
 			print FILEOUT "ISMONGOS: \"0\"\n";
+		}
+		elsif ( $inline =~ /(\s+)imagePullPolicy/ ) {
+			print FILEOUT "${1}imagePullPolicy: " . $self->appInstance->imagePullPolicy . "\n";
 		}
 		else {
 			print FILEOUT $inline;
@@ -310,36 +304,6 @@ sub isRunning {
 	}
 }
 
-sub setPortNumbers {
-	my ($self)          = @_;
-	my $logger = get_logger("Weathervane::Services::MongodbService");
-	my $serviceType     = $self->getParamValue('serviceType');
-	my $portMultiplier = $self->appInstance->getNextPortMultiplierByServiceType($serviceType);
-	my $portOffset     = $self->getParamValue( $serviceType . 'PortStep' ) * $portMultiplier;
-
-	$logger->debug("setPortNumbers");
-	$self->internalPortMap->{'mongod'}  = 27017 + $portOffset;
-	$self->internalPortMap->{'mongos'}  = 27017;
-	$self->internalPortMap->{'mongoc1'} = 27019;
-	$self->internalPortMap->{'mongoc2'} = 27020;
-	$self->internalPortMap->{'mongoc3'} = 27021;
-	if ( ( $self->numNosqlShards > 0 ) && ( $self->numNosqlReplicas > 0 ) ) {
-		$self->internalPortMap->{'mongod'} = 27018 + $portOffset;
-	}
-	elsif ( $self->numNosqlShards > 0 ) {
-		$self->internalPortMap->{'mongod'} = 27018 + $portOffset;
-	}
-
-}
-
-sub setExternalPortNumbers {
-	my ($self)          = @_;
-	$self->portMap->{'mongod'}  = $self->internalPortMap->{'mongod'};
-	$self->portMap->{'mongoc1'} = $self->internalPortMap->{'mongoc1'};
-	$self->portMap->{'mongoc2'} = $self->internalPortMap->{'mongoc2'};
-	$self->portMap->{'mongoc3'} = $self->internalPortMap->{'mongoc3'};
-}
-
 override 'sanityCheck' => sub {
 	my ($self, $cleanupLogDir) = @_;
 	my $console_logger = get_logger("Console");
@@ -348,30 +312,6 @@ override 'sanityCheck' => sub {
 
 	return 1;	
 };
-
-sub stopStatsCollection {
-	my ($self) = @_;
-
-}
-
-sub startStatsCollection {
-	my ( $self, $intervalLengthSec, $numIntervals ) = @_;
-	my $hostname         = $self->host->hostName;
-	my $logger = get_logger("Weathervane::Services::MongodbService");
-
-}
-
-sub getStatsFiles {
-	my ( $self, $destinationPath ) = @_;
-	my $logger = get_logger("Weathervane::Services::MongodbService");
-
-}
-
-sub cleanStatsFiles {
-	my ($self) = @_;
-	my $logger = get_logger("Weathervane::Services::MongodbService");
-
-}
 
 sub getLogFiles {
 	my ( $self, $destinationPath ) = @_;

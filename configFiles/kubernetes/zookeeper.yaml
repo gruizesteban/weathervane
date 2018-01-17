@@ -3,11 +3,11 @@ kind: ConfigMap
 metadata:
   name: zookeeper-config
 data: 
-  ZK_CLIENT_PORT: "2181"
-  ZK_PEER_PORT: "2888"
-  ZK_ELECTION_PORT: "3888"
-  ZK_SERVERS: "server.1=zookeeper-0:2888:3888"
-  ZK_ID: "1"
+  ZK_CLIENT_PORT: 2181
+  ZK_PEER_PORT: 2888
+  ZK_ELECTION_PORT: 3888
+  ZK_SERVERS: "server.1=zookeeper-0:2888:3888,server.2=zookeeper-1:2888:3888,server.3=zookeeper-2:2888:3888"
+  ZK_ID: 0
 ---
 apiVersion: apps/v1beta1
 kind: StatefulSet
@@ -15,7 +15,7 @@ metadata:
   name: zookeeper
 spec:
   serviceName: zookeeper
-  replicas: 1
+  replicas: 3
   template:
     metadata:
       name: zookeeper
@@ -27,7 +27,7 @@ spec:
       containers:
       - image: hrosenbe/weathervane-zookeeper:1.1.0
         name: zookeeper
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:
             name: zookeeper-config

@@ -10,6 +10,12 @@ my $id           = $ENV{'ZK_ID'};
 my $servers      = $ENV{'ZK_SERVERS'};
 my @servers      = split /,/, $servers;
 
+if (!$id) {
+	my $hostname = `hostname`;
+	my @parts = split /-/, $hostname;
+	$id = $parts[1] + 1; 
+}
+
 print "configure zookeeper. \n";
 open( FILEIN, "/root/zookeeper/conf/zoo.cfg" )
   or die "Can't open file /root/zookeeper/conf/zoo.cfg: $!";

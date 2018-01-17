@@ -8,8 +8,8 @@ data:
   KEEPALIVETIMEOUT: 120
   MAXKEEPALIVEREQUESTS: 1000
   IMAGESTORETYPE: "mongodb"
-  HTTPPORT: 9080
-  HTTPSPORT: 9443
+  HTTPPORT: 80
+  HTTPSPORT: 443
   APPSERVERS: "tomcat:8080"
 ---
 apiVersion: extensions/v1beta1
@@ -29,15 +29,15 @@ spec:
       containers:
       - image: hrosenbe/weathervane-nginx:1.1.0
         name: nginx
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:
             name: nginx-config
         ports: 
-        - containerPort: 9080
+        - containerPort: 80
           name: httpport
           protocol: TCP
-        - containerPort: 9443
+        - containerPort: 443
           name: httpsport
           protocol: TCP
 ---
@@ -48,9 +48,9 @@ metadata:
 spec:
   type: NodePort
   ports:
-  - port: 9080
+  - port: 80
     name: httpport
-  - port: 9443
+  - port: 443
     name: httpsport
   selector:
     app: auction
@@ -69,4 +69,4 @@ spec:
       - path: /
         backend:
           serviceName: nginx
-          servicePort: 9080
+          servicePort: 80

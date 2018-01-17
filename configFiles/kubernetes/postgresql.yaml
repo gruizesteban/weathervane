@@ -32,7 +32,7 @@ spec:
       containers:
       - image: hrosenbe/weathervane-postgresql:1.1.0
         name: postgresql
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:
             name: postgresql-config
