@@ -150,6 +150,12 @@ override 'initialize' => sub {
 	}
 	$self->setParamValue( 'distDir', $distDir );
 
+	my $configDir  = $self->getParamValue('configDir');
+	if ( !( $configDir =~ /^\// ) ) {
+		$configDir = $weathervaneHome . "/" . $configDir;
+	}
+	$self->setParamValue('configDir', $configDir);
+
 	$self->users( $self->getParamValue('users') );
 	my $userLoadPath = $self->getParamValue('userLoadPath');
 	if ( $#$userLoadPath >= 0 ) {

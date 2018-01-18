@@ -11,17 +11,13 @@
 # SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-package Service;
+package KubernetesService;
 
 use Moose;
-use MooseX::Storage;
 use Tie::IxHash;
 use Parameters qw(getParamValue);
 no if $] >= 5.017011, warnings => 'experimental::smartmatch';
 use POSIX qw(floor);
-
-with Storage( 'format' => 'JSON', 'io' => 'File' );
-
 use namespace::autoclean;
 use Log::Log4perl qw(get_logger);
 use ComputeResources::ComputeResource;
@@ -30,7 +26,7 @@ use Instance;
 use Services::Service;
 
 has 'namespace' => (
-	is  => 'ro',
+	is  => 'rw',
 	isa => 'Str',
 );
 
@@ -81,11 +77,11 @@ override 'stop' => sub {
 		
 	my $cluster = $self->host;
 	
-	$cluster->kubernetesDelete("configMap", "$impl-config", 0, $self->namespace);
-	$cluster->kubernetesDelete("deployment", "$impl", 0, $self->namespace);
-	$cluster->kubernetesDelete("statefulset", "$impl", 0, $self->namespace);
-	$cluster->kubernetesDelete("service", "$impl", 0, $self->namespace);
-	$cluster->kubernetesDelete("ingress", "$impl", 0, $self->namespace);
+	$cluster->kubernetesDelete("configMap", "$impl-config", $self->namespace);
+	$cluster->kubernetesDelete("deployment", "$impl", $self->namespace);
+	$cluster->kubernetesDelete("statefulset", "$impl", $self->namespace);
+	$cluster->kubernetesDelete("service", "$impl", $self->namespace);
+	$cluster->kubernetesDelete("ingress", "$impl", $self->namespace);
 		
 	close $log;
 };
@@ -98,6 +94,7 @@ override 'start' => sub {
 	my $console_logger   = get_logger("Console");
 	my $time = `date +%H:%M`;
 	chomp($time);
+	my $impl = $self->getImpl();
 	my $logName     = "$logPath/Start${impl}Kubernetes-$time.log";
 	my $appInstance = $self->appInstance;
 	
@@ -129,7 +126,7 @@ sub setExternalPortNumbers {
 	my ($self)          = @_;
 }
 
-override 'isReachable ' => sub {
+override 'isReachable' => sub {
 	my ($self, $fileout) = @_;
 	return 1;		
 };

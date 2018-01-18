@@ -98,25 +98,25 @@ sub configure {
 	while ( my $inline = <FILEIN> ) {
 
 		if ( $inline =~ /POSTGRESTOTALMEM/ ) {
-			print FILEOUT "POSTGRESTOTALMEM: $totalMemory\n";
+			print FILEOUT "  POSTGRESTOTALMEM: $totalMemory\n";
 		}
 		elsif ( $inline =~ /POSTGRESTOTALMEMUNIT/ ) {
-			print FILEOUT "POSTGRESTOTALMEMUNIT: $totalMemoryUnit\n";
+			print FILEOUT "  POSTGRESTOTALMEMUNIT: $totalMemoryUnit\n";
 		}
 		elsif ( $inline =~ /POSTGRESSHAREDBUFFERS/ ) {
-			print FILEOUT "POSTGRESSHAREDBUFFERS: " . $self->getParamValue('postgresqlSharedBuffers') . "\n";
+			print FILEOUT "  POSTGRESSHAREDBUFFERS: " . $self->getParamValue('postgresqlSharedBuffers') . "\n";
 		}
 		elsif ( $inline =~ /POSTGRESSHAREDBUFFERSPCT/ ) {
-			print FILEOUT "POSTGRESSHAREDBUFFERSPCT: " . $self->getParamValue('postgresqlSharedBuffersPct') . "\n";
+			print FILEOUT "  POSTGRESSHAREDBUFFERSPCT: " . $self->getParamValue('postgresqlSharedBuffersPct') . "\n";
 		}
 		elsif ( $inline =~ /POSTGRESEFFECTIVECACHESIZE/ ) {
-			print FILEOUT "POSTGRESEFFECTIVECACHESIZE: \"" . $self->getParamValue('postgresqlEffectiveCacheSize') . "\"\n";
+			print FILEOUT "  POSTGRESEFFECTIVECACHESIZE: \"" . $self->getParamValue('postgresqlEffectiveCacheSize') . "\"\n";
 		}
 		elsif ( $inline =~ /POSTGRESEFFECTIVECACHESIZEPCT/ ) {
-			print FILEOUT "POSTGRESEFFECTIVECACHESIZEPCT: \"" . $self->getParamValue('postgresqlEffectiveCacheSizePct') . "\"\n";
+			print FILEOUT "  POSTGRESEFFECTIVECACHESIZEPCT: \"" . $self->getParamValue('postgresqlEffectiveCacheSizePct') . "\"\n";
 		}
 		elsif ( $inline =~ /POSTGRESMAXCONNECTIONS/ ) {
-			print FILEOUT "POSTGRESMAXCONNECTIONS: \"" . $self->getParamValue('postgresqlMaxConnections') . "\"\n";
+			print FILEOUT "  POSTGRESMAXCONNECTIONS: \"" . $self->getParamValue('postgresqlMaxConnections') . "\"\n";
 		}
 		elsif ( $inline =~ /(\s+)imagePullPolicy/ ) {
 			print FILEOUT "${1}imagePullPolicy: " . $self->appInstance->imagePullPolicy . "\n";

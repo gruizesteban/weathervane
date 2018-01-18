@@ -33,170 +33,102 @@ extends 'DataManager';
 
 has '+name' => ( default => 'Weathervane', );
 
-has 'dbLoaderClasspath' => (
-	is  => 'rw',
-	isa => 'Str',
-);
-
 # default scale factors
 my $defaultUsersScaleFactor           = 5;
 my $defaultUsersPerAuctionScaleFactor = 15.0;
 
 override 'initialize' => sub {
 	my ($self) = @_;
+	my $weathervaneHome = $self->getParamValue('weathervaneHome');
+	my $configDir  = $self->getParamValue('configDir');
+	if ( !( $configDir =~ /^\// ) ) {
+		$configDir = $weathervaneHome . "/" . $configDir;
+	}
+	$self->setParamValue('configDir', $configDir);
 
 	super();
 
-	my $weathervaneHome  = $self->getParamValue('weathervaneHome');
-	my $dbLoaderImageDir = $self->getParamValue('dbLoaderImageDir');
-	if ( !( $dbLoaderImageDir =~ /^\// ) ) {
-		$dbLoaderImageDir = $weathervaneHome . "/" . $dbLoaderImageDir;
-	}
-	$self->setParamValue( 'dbLoaderImageDir', $dbLoaderImageDir );
-
-	my $dbLoaderDir = $self->getParamValue('dbLoaderDir');
-	$self->setParamValue( 'dbLoaderDir',
-		"$dbLoaderDir/dbLoader.jar:$dbLoaderDir/dbLoaderLibs/*:$dbLoaderDir/dbLoaderLibs" );
-
-	$self->dbLoaderClasspath( "$dbLoaderDir/dbLoader.jar:$dbLoaderDir/dbLoaderLibs/*:$dbLoaderDir/dbLoaderLibs" );
-
 };
 
-sub startAuctionDataManagerContainer {
+sub startAuctionKubernetesDataManagerContainer {
 	my ( $self, $users, $applog ) = @_;
-	my $logger         = get_logger("Weathervane::DataManager::AuctionDataManager");
-	my $workloadNum    = $self->getParamValue('workloadNum');
-	my $appInstanceNum = $self->getParamValue('appInstanceNum');
-	my $name        = $self->getParamValue('dockerName');
-	
-	$self->host->dockerStopAndRemove( $applog, $name );
+	my $logger         = get_logger("Weathervane::DataManager::AuctionKubernetesDataManager");
 
-	# Calculate the values for the environment variables used by the auctiondatamanager container
-	my %envVarMap;
-	$envVarMap{"USERSPERAUCTIONSCALEFACTOR"} = $self->getParamValue('usersPerAuctionScaleFactor');	
-	$envVarMap{"USERS"} = $users;	
-	$envVarMap{"MAXUSERS"} = $self->getParamValue('maxUsers');	
-	$envVarMap{"WORKLOADNUM"} = $workloadNum;	
-	$envVarMap{"APPINSTANCENUM"} = $appInstanceNum;	
-
+	my $namespace = $self->appInstance->namespace;
+	my $configDir = $self->getParamValue('configDir');
 	my $maxDuration = $self->getParamValue('maxDuration');
 	my $totalTime =
 	  $self->getParamValue('rampUp') + $self->getParamValue('steadyState') + $self->getParamValue('rampDown');
-	$envVarMap{"MAXDURATION"} = max( $maxDuration, $totalTime );
 
 	my $nosqlServersRef = $self->appInstance->getActiveServicesByType('nosqlServer');
 	my $nosqlServerRef = $nosqlServersRef->[0];
 	my $numNosqlShards = $nosqlServerRef->numNosqlShards;
-	$envVarMap{"NUMNOSQLSHARDS"} = $numNosqlShards;
-	
 	my $numNosqlReplicas = $nosqlServerRef->numNosqlReplicas;
-	$envVarMap{"NUMNOSQLREPLICAS"} = $numNosqlReplicas;
-	
-	my $mongodbHostname;
-	my $mongodbPort;
-	if ( $nosqlServerRef->numNosqlShards == 0 ) {
-		$mongodbHostname = $nosqlServerRef->getIpAddr();
-		$mongodbPort   = $nosqlServerRef->portMap->{'mongod'};
-	}
-	else {
-		# The mongos will be running on an appServer
-		my $appServersRef = $self->appInstance->getActiveServicesByType("appServer");
-		my $appServerRef = $appServersRef->[0];
-		$mongodbHostname = $appServerRef->getIpAddr();
-		$mongodbPort   = $appServerRef->portMap->{'mongos'};
-	}
-
-	my $mongodbReplicaSet = "$mongodbHostname:$mongodbPort";
-	if ( $nosqlServerRef->numNosqlReplicas > 0 ) {
-		for ( my $i = 1 ; $i <= $#{$nosqlServersRef} ; $i++ ) {
-			my $nosqlService  = $nosqlServersRef->[$i];
-			my $mongodbHostname = $nosqlService->getIpAddr();
-			my $mongodbPort   = $nosqlService->portMap->{'mongod'};
-			$mongodbReplicaSet .= ",$mongodbHostname:$mongodbPort";
-		}
-	}
-	$envVarMap{"MONGODBHOSTNAME"} = $mongodbHostname;
-	$envVarMap{"MONGODBPORT"} = $mongodbPort;
-	$envVarMap{"MONGODBREPLICASET"} = $mongodbReplicaSet;
-	
-	my $dbServicesRef = $self->appInstance->getActiveServicesByType("dbServer");
-	my $dbService     = $dbServicesRef->[0];
-	my $dbHostname    = $dbService->getIpAddr();
-	my $dbPort        = $dbService->portMap->{ $dbService->getImpl() };
-	$envVarMap{"DBHOSTNAME"} = $dbHostname;
-	$envVarMap{"DBPORT"} = $dbPort;
-	
 	my $springProfilesActive = $self->appInstance->getSpringProfilesActive();
-	$envVarMap{"SPRINGPROFILESACTIVE"} = $springProfilesActive;
+
+	open( FILEIN,  "$configDir/kubernetes/auctionDataManager.yaml" ) or die "$configDir/kubernetes/auctionDataManager.yaml: $!\n";
+	open( FILEOUT, ">/tmp/auctionDataManager-$namespace.yaml" )             or die "Can't open file /tmp/auctionDataManager-$namespace.yaml: $!\n";
 	
-	# Start the  auctiondatamanager container
-	my %volumeMap;
-	my %portMap;
-	my $directMap = 0;
-	my $cmd        = "";
-	my $entryPoint = "";
-	my $dockerConfigHashRef = {};	
-	if ($self->getParamValue('dockerNet')) {
-		$dockerConfigHashRef->{'net'} = $self->getParamValue('dockerNet');
-	}
-	if ($self->getParamValue('dockerCpus')) {
-		$dockerConfigHashRef->{'cpus'} = $self->getParamValue('dockerCpus');
-	}
-	if ($self->getParamValue('dockerCpuShares')) {
-		$dockerConfigHashRef->{'cpu-shares'} = $self->getParamValue('dockerCpuShares');
-	} 
-	if ($self->getParamValue('dockerCpuSetCpus') ne "unset") {
-		$dockerConfigHashRef->{'cpuset-cpus'} = $self->getParamValue('dockerCpuSetCpus');
-		
-		if ($self->getParamValue('dockerCpus') == 0) {
-			# Parse the CpuSetCpus parameter to determine how many CPUs it covers and 
-			# set dockerCpus accordingly so that services can know how many CPUs the 
-			# container has when configuring
-			my $numCpus = 0;
-			my @cpuGroups = split(/,/, $self->getParamValue('dockerCpuSetCpus'));
-			foreach my $cpuGroup (@cpuGroups) {
-				if ($cpuGroup =~ /-/) {
-					# This cpu group is a range
-					my @rangeEnds = split(/-/,$cpuGroup);
-					$numCpus += ($rangeEnds[1] - $rangeEnds[0] + 1);
-				} else {
-					$numCpus++;
-				}
-			}
-			$self->setParamValue('dockerCpus', $numCpus);
+	while ( my $inline = <FILEIN> ) {
+
+		if ( $inline =~ /USERS/ ) {
+			print FILEOUT "USERS: $users\n";
 		}
+		elsif ( $inline =~ /MAXUSERS/ ) {
+			print FILEOUT "  MAXUSERS: " . $self->getParamValue('maxUsers') . "\n";
+		}
+		elsif ( $inline =~ /USERSPERAUCTIONSCALEFACTOR/ ) {
+			print FILEOUT "  USERSPERAUCTIONSCALEFACTOR: " . $self->getParamValue('usersPerAuctionScaleFactor') . "\n";
+		}
+		elsif ( $inline =~ /WORKLOADNUM/ ) {
+			print FILEOUT "  WORKLOADNUM: $workloadNum\n";
+		}
+		elsif ( $inline =~ /APPINSTANCENUM/ ) {
+			print FILEOUT "  APPINSTANCENUM: $appInstanceNum\n";
+		}
+		elsif ( $inline =~ /NUMNOSQLSHARDS/ ) {
+			print FILEOUT "  NUMNOSQLSHARDS: $numNosqlShards\n";
+		}
+		elsif ( $inline =~ /NUMNOSQLREPLICAS/ ) {
+			print FILEOUT "  NUMNOSQLREPLICAS: $numNosqlReplicas\n";
+		}
+		elsif ( $inline =~ /SPRINGPROFILESACTIVE/ ) {
+			print FILEOUT "  SPRINGPROFILESACTIVE: $springProfilesActive\n";
+		}
+		elsif ( $inline =~ /MAXDURATION/ ) {
+			print FILEOUT "  MAXDURATION: " . max( $maxDuration, $totalTime ) . "\n";
+		}
+		elsif ( $inline =~ /(\s+)imagePullPolicy/ ) {
+			print FILEOUT "${1}imagePullPolicy: " . $self->appInstance->imagePullPolicy . "\n";
+		}
+		else {
+			print FILEOUT $inline;
+		}
+
 	}
-	if ($self->getParamValue('dockerCpuSetMems') ne "unset") {
-		$dockerConfigHashRef->{'cpuset-mems'} = $self->getParamValue('dockerCpuSetMems');
-	}
-	if ($self->getParamValue('dockerMemory')) {
-		$dockerConfigHashRef->{'memory'} = $self->getParamValue('dockerMemory');
-	}
-	if ($self->getParamValue('dockerMemorySwap')) {
-		$dockerConfigHashRef->{'memory-swap'} = $self->getParamValue('dockerMemorySwap');
-	}	
-	$self->host->dockerRun(
-		$applog, $name,
-		"auctiondatamanager", $directMap, \%portMap, \%volumeMap, \%envVarMap, $dockerConfigHashRef,
-		$entryPoint, $cmd, 1
-	);
+	
+	close FILEIN;
+	close FILEOUT;	
+
+	my $cluster = $self->host;
+	$cluster->kubernetesApply("/tmp/auctionDataManager-${namespace}.yaml", $namespace);
+	
 }
 
-sub stopAuctionDataManagerContainer {
+sub stopAuctionKubernetesDataManagerContainer {
 	my ( $self, $applog ) = @_;
-	my $logger         = get_logger("Weathervane::DataManager::AuctionDataManager");
-	my $workloadNum    = $self->getParamValue('workloadNum');
-	my $appInstanceNum = $self->getParamValue('appInstanceNum');
-	my $name        = $self->getParamValue('dockerName');
-
-	$self->host->dockerStopAndRemove( $applog, $name );
+	my $logger         = get_logger("Weathervane::DataManager::AuctionKubernetesDataManager");
+	my $cluster = $self->host;
+	
+	$cluster->kubernetesDelete("configMap", "$auctionDataManager-config", $self->appInstance->namespace);
+	$cluster->kubernetesDelete("deployment", "auctionDataManager", $self->appInstance->namespace);
 
 }
 
 sub prepareData {
 	my ( $self, $users, $logPath ) = @_;
 	my $console_logger = get_logger("Console");
-	my $logger         = get_logger("Weathervane::DataManager::AuctionDataManager");
+	my $logger         = get_logger("Weathervane::DataManager::AuctionKubernetesDataManager");
 	my $workloadNum    = $self->getParamValue('workloadNum');
 	my $appInstanceNum = $self->getParamValue('appInstanceNum');
 	my $name        = $self->getParamValue('dockerName');
@@ -238,7 +170,7 @@ sub prepareData {
 	}
 	$logger->debug( "All data services are up for appInstance $appInstanceNum of workload $workloadNum." );
 
-	$self->startAuctionDataManagerContainer ($users, $logHandle);
+	$self->startAuctionKubernetesDataManagerContainer ($users, $logHandle);
 		
 	my $loadedData = 0;
 	if ($reloadDb) {
@@ -340,7 +272,7 @@ sub prepareData {
 	}
 
 	# stop the auctiondatamanager container
-	$self->stopAuctionDataManagerContainer ($logHandle);
+	$self->stopAuctionKubernetesDataManagerContainer ($logHandle);
 
 	# stop the data services. They must be started in the main process
 	# so that the port numbers are available
@@ -353,7 +285,7 @@ sub prepareData {
 sub pretouchData {
 	my ( $self, $logPath ) = @_;
 	my $console_logger = get_logger("Console");
-	my $logger         = get_logger("Weathervane::DataManager::AuctionDataManager");
+	my $logger         = get_logger("Weathervane::DataManager::AuctionKubernetesDataManager");
 	my $workloadNum    = $self->getParamValue('workloadNum');
 	my $appInstanceNum = $self->getParamValue('appInstanceNum');
 	my $name        = $self->getParamValue('dockerName');
@@ -690,7 +622,7 @@ sub pretouchData {
 sub loadData {
 	my ( $self, $users, $logPath ) = @_;
 	my $console_logger   = get_logger("Console");
-	my $logger           = get_logger("Weathervane::DataManager::AuctionDataManager");
+	my $logger           = get_logger("Weathervane::DataManager::AuctionKubernetesDataManager");
 	my $hostname    = $self->host->hostName;
 	my $name        = $self->getParamValue('dockerName');
 
@@ -759,7 +691,7 @@ sub loadData {
 sub isDataLoaded {
 	my ( $self, $users, $logPath ) = @_;
 	my $console_logger = get_logger("Console");
-	my $logger         = get_logger("Weathervane::DataManager::AuctionDataManager");
+	my $logger         = get_logger("Weathervane::DataManager::AuctionKubernetesDataManager");
 
 	my $workloadNum    = $self->getParamValue('workloadNum');
 	my $appInstanceNum = $self->getParamValue('appInstanceNum');
@@ -796,7 +728,7 @@ sub isDataLoaded {
 sub cleanData {
 	my ( $self, $users, $logHandle ) = @_;
 	my $console_logger = get_logger("Console");
-	my $logger         = get_logger("Weathervane::DataManager::AuctionDataManager");
+	my $logger         = get_logger("Weathervane::DataManager::AuctionKubernetesDataManager");
 	my $workloadNum    = $self->getParamValue('workloadNum');
 	my $appInstanceNum = $self->getParamValue('appInstanceNum');
 	my $name        = $self->getParamValue('dockerName');

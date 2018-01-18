@@ -1220,7 +1220,11 @@ sub checkVersions {
 	my $allSame = 1;
 	foreach my $host ( @{ $self->hostsRef } ) {
 
-		if (!$host->isNonDocker() || $host->getParamValue('vicHost')) {
+		if ($host->meta->name eq "KubernetesCluster") {
+			next;
+		}
+
+		if (!$host->isNonDocker() || $host->getParamValue('vicHost') || ) {
 			next;
 		}
 

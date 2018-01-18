@@ -63,20 +63,29 @@ sub kubernetesSetContext {
 	$logger->debug("Output: $outString");
 }
 
+sub kubernetesDeleteAll {
+	my ( $self, $resourceType, $namespace ) = @_;
+	my $logger         = get_logger("Weathervane::Clusters::KubernetesCluster");
+	$logger->debug("kubernetesDelete deleteAll of type $resourceType in namespace $namespace");
+	$self->kubernetesSetContext();
+	my $cmd;
+	my $outString;
+	$cmd = "kubectl delete $resourceType --all --namespace=$namespace 2>&1";
+	$outString = `$cmd`;
+	$logger->debug("Command: $cmd");
+	$logger->debug("Output: $outString");
+	
+}
+
 sub kubernetesDelete {
-	my ( $self, $resourceType, $resourceName, $namespace, $all ) = @_;
+	my ( $self, $resourceType, $resourceName, $namespace ) = @_;
 	my $logger         = get_logger("Weathervane::Clusters::KubernetesCluster");
 	$logger->debug("kubernetesDelete delete $resourceName of type $resourceType in namespace $namespace");
 	$self->kubernetesSetContext();
 	my $cmd;
 	my $outString;
-	if ($all) {
-		$cmd = "kubectl delete $resourceType --all --namespace=$namespace 2>&1";
-		$outString = `$cmd`;
-	} else {
-		$cmd = "kubectl delete $resourceType $resourcename --namespace=$namespace 2>&1";
-		$outString = `$cmd`;
-	}
+	$cmd = "kubectl delete $resourceType $resourceName --namespace=$namespace 2>&1";
+	$outString = `$cmd`;
 	$logger->debug("Command: $cmd");
 	$logger->debug("Output: $outString");
 	
@@ -92,7 +101,7 @@ sub kubernetesApply {
 	$cmd = "kubectl apply -f $fileName --namespace=$namespace 2>&1";
 	$outString = `$cmd`;
 	$logger->debug("Command: $cmd");
-	$logger->debug("Output: $outString");s
+	$logger->debug("Output: $outString");
 }
 
 __PACKAGE__->meta->make_immutable;

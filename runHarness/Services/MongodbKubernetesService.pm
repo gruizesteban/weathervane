@@ -105,115 +105,6 @@ override 'initialize' => sub {
 	super();
 };
 
-# Stop all of the services needed for the MongoDB service
-override 'stop' => sub {
-	my ($self, $serviceType, $logPath)            = @_;
-	my $logger = get_logger("Weathervane::Services::MongodbService");
-	my $console_logger   = get_logger("Console");
-	my $time = `date +%H:%M`;
-	chomp($time);
-	my $logName     = "$logPath/StopMongodbKubernetes-$time.log";
-	my $appInstance = $self->appInstance;
-	
-	$logger->debug("MongoDB Stop");
-	
-	my $dblog;
-	open( $dblog, ">$logName" )
-	  || die "Error opening /$logName:$!";
-	print $dblog $self->meta->name . " In MongodbService::stop\n";
-		
-	if ( ( $self->numNosqlShards > 0 ) && ( $self->numNosqlReplicas > 0 ) ) {
-		die "Need to implement stopShardedReplicatedMongodb";
-	}
-	elsif ( $self->numNosqlShards > 0 ) {
-		die "Need to implement stopShardedMongodb";
-	}
-	elsif ( $self->numNosqlReplicas > 0 ) {
-		die "Need to implement stopReplicatedMongodb";
-	}
-
-	my $cluster = $self->host;
-	
-	$cluster->kubernetesDelete("configMap", "mongod-config", 0, $self->namespace);
-	$cluster->kubernetesDelete("statefulSet", "mongod", 0, $self->namespace);
-	$cluster->kubernetesDelete("service", "mongod", 0, $self->namespace);
-		
-	close $dblog;
-};
-
-# Configure and Start all of the services needed for the 
-# MongoDB service
-override 'start' => sub {
-	my ($self, $serviceType, $users, $logPath)            = @_;
-	my $logger = get_logger("Weathervane::Services::MongodbService");
-	my $console_logger   = get_logger("Console");
-	my $time = `date +%H:%M`;
-	chomp($time);
-	my $logName     = "$logPath/StartMongodbKubernetes-$time.log";
-	my $appInstance = $self->appInstance;
-	
-	$logger->debug("MongoDB Start");
-	
-	my $dblog;
-	open( $dblog, ">$logName" )
-	  || die "Error opening /$logName:$!";
-	print $dblog $self->meta->name . " In MongodbService::start\n";
-		
-	my $nosqlServersRef = $self->appInstance->getActiveServicesByType('nosqlServer');
-	foreach my $nosqlServer (@$nosqlServersRef) {	
-		$nosqlServer->setExternalPortNumbers();
-	}
-	
-	# Set up the configuration files for all of the hosts to be part of the service
-	my $workloadNum = $self->getParamValue('workloadNum');
-	my $appInstanceNum = $self->getParamValue('appInstanceNum');
-	my $suffix = "W${workloadNum}I${appInstanceNum}";
-	my $configDir        = $self->getParamValue('configDir');
-
-	open( FILEIN,  "$configDir/kubernetes/mongod.yaml" ) or die "$configDir/kubernetes/mongod.yaml: $!\n";
-	open( FILEOUT, ">/tmp/mongod${suffix}.yaml" )             or die "Can't open file /tmp/mongod${suffix}.yaml: $!\n";
-	
-	while ( my $inline = <FILEIN> ) {
-
-		if ( $inline =~ /CLEARBEFORESTART/ ) {
-			print FILEOUT "CLEARBEFORESTART: \"" . $self->clearBeforeStart . ""\"\n";
-		}
-		elsif ( $inline =~ /MONGODPORT/ ) {
-			print FILEOUT "MONGODPORT: \"27017\"\n";
-		}
-		elsif ( $inline =~ /MONGODPORT/ ) {
-			print FILEOUT "MONGODPORT: \"27017\"\n";
-		}
-		elsif ( $inline =~ /MONGOCPORT/ ) {
-			print FILEOUT "MONGODPORT: \"27019\"\n";
-		}
-		elsif ( $inline =~ /NUMSHARDS/ ) {
-			print FILEOUT "NUMSHARDS: \"$numShards"\"\n";
-		}
-		elsif ( $inline =~ /NUMREPLICAS/ ) {
-			print FILEOUT "NUMREPLICAS: \"$numReplicas\"\n";
-		}
-		elsif ( $inline =~ /ISCFGSVR/ ) {
-			print FILEOUT "ISCFGSVR: \"0\"\n";
-		}
-		elsif ( $inline =~ /ISMONGOS/ ) {
-			print FILEOUT "ISMONGOS: \"0\"\n";
-		}
-		else {
-			print FILEOUT $inline;
-		}
-
-	}
-	close FILEIN;
-	close FILEOUT;
-
-	my $cluster = $self->host;
-	$cluster->kubernetesApply("/tmp/mongod${suffix}.yaml", $self->namespace);
-	
-	close $dblog;
-
-};
-
 sub configure {
 	my ( $self, $dblog, $serviceType, $users ) = @_;
 	my $logger = get_logger("Weathervane::Services::MongodbService");
@@ -232,19 +123,19 @@ sub configure {
 	while ( my $inline = <FILEIN> ) {
 
 		if ( $inline =~ /CLEARBEFORESTART/ ) {
-			print FILEOUT "CLEARBEFORESTART: \"" . $self->clearBeforeStart . ""\"\n";
+			print FILEOUT "  CLEARBEFORESTART: " . $self->clearBeforeStart . "\n";
 		}
 		elsif ( $inline =~ /NUMSHARDS/ ) {
-			print FILEOUT "NUMSHARDS: \"$numShards"\"\n";
+			print FILEOUT "  NUMSHARDS: $numShards\n";
 		}
 		elsif ( $inline =~ /NUMREPLICAS/ ) {
-			print FILEOUT "NUMREPLICAS: \"$numReplicas\"\n";
+			print FILEOUT "  NUMREPLICAS: $numReplicas\n";
 		}
 		elsif ( $inline =~ /ISCFGSVR/ ) {
-			print FILEOUT "ISCFGSVR: \"0\"\n";
+			print FILEOUT "  ISCFGSVR: 0\n";
 		}
 		elsif ( $inline =~ /ISMONGOS/ ) {
-			print FILEOUT "ISMONGOS: \"0\"\n";
+			print FILEOUT "  ISMONGOS: 0\n";
 		}
 		elsif ( $inline =~ /(\s+)imagePullPolicy/ ) {
 			print FILEOUT "${1}imagePullPolicy: " . $self->appInstance->imagePullPolicy . "\n";
@@ -255,12 +146,8 @@ sub configure {
 
 	}
 	
-	
 	close FILEIN;
 	close FILEOUT;
-	
-		
-
 }
 
 sub clearDataAfterStart {

@@ -20,7 +20,7 @@ use POSIX;
 use Tie::IxHash;
 use Log::Log4perl qw(get_logger);
 use AppInstance::AuctionAppInstance;
-use Clusters::Cluster;
+use ComputeResources::Cluster;
 
 with Storage( 'format' => 'JSON', 'io' => 'File' );
 
@@ -31,7 +31,7 @@ use WeathervaneTypes;
 extends 'AuctionAppInstance';
 
 has 'namespace' => (
-	is  => 'ro',
+	is  => 'rw',
 	isa => 'Str',
 );
 
@@ -64,6 +64,7 @@ sub setHost {
 	my $namespace = $self->namespace;
 	
 	# Create the namespace and the namespace-wide resources
+	my $configDir        = $self->getParamValue('configDir');
 	open( FILEIN,  "$configDir/kubernetes/namespace.yaml" ) or die "$configDir/kubernetes/namespace.yaml: $!\n";
 	open( FILEOUT, ">/tmp/namespace-$namespace.yaml" )             or die "Can't open file /tmp/namespace-$namespace.yaml: $!\n";
 	

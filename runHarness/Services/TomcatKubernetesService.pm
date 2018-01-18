@@ -67,7 +67,6 @@ sub configure {
 	my $tomcatCatalinaBase = $self->getParamValue('tomcatCatalinaBase');
 	my $maxIdle = ceil($self->getParamValue('appServerJdbcConnections') / 2);
 	my $nodeNum = $self->getParamValue('instanceNum');
-	my $users = $self->appInstance->getUsers();
 	my $maxConnections =
 	  ceil( $self->getParamValue('frontendConnectionMultiplier') *
 		  $users /
@@ -95,19 +94,19 @@ sub configure {
 	while ( my $inline = <FILEIN> ) {
 
 		if ( $inline =~ /TOMCAT_JVMOPTS/ ) {
-			print FILEOUT "TOMCAT_JVMOPTS: \"$completeJVMOpts\"\n";
+			print FILEOUT "  TOMCAT_JVMOPTS: \"$completeJVMOpts\"\n";
 		}
 		elsif ( $inline =~ /TOMCAT_THREADS/ ) {
-			print FILEOUT "TOMCAT_THREADS: $threads\n";
+			print FILEOUT "  TOMCAT_THREADS: $threads\n";
 		}
 		elsif ( $inline =~ /TOMCAT_JDBC_CONNECTIONS/ ) {
-			print FILEOUT "TOMCAT_JDBC_CONNECTIONS: $connections\n";
+			print FILEOUT "  TOMCAT_JDBC_CONNECTIONS: $connections\n";
 		}
 		elsif ( $inline =~ /TOMCAT_JDBC_MAXIDLE/ ) {
-			print FILEOUT "TOMCAT_JDBC_MAXIDLE: $maxIdle\n";
+			print FILEOUT "  TOMCAT_JDBC_MAXIDLE: $maxIdle\n";
 		}
 		elsif ( $inline =~ /TOMCAT_CONNECTIONS/ ) {
-			print FILEOUT "TOMCAT_CONNECTIONS: $maxConnections\n";
+			print FILEOUT "  TOMCAT_CONNECTIONS: $maxConnections\n";
 		}
 		else {
 			print FILEOUT $inline;
