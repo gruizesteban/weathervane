@@ -57,7 +57,7 @@ sub kubernetesSetContext {
 	my $logger         = get_logger("Weathervane::Clusters::KubernetesCluster");
 	my $contextName = $self->clusterName;
 	$logger->debug("kubernetesSetContext set context to $contextName");
-	my $cmd = "kubectl set config use-context $contextName 2>&1";
+	my $cmd = "kubectl config use-context $contextName 2>&1";
 	my $outString = `$cmd`;
 	$logger->debug("Command: $cmd");
 	$logger->debug("Output: $outString");
