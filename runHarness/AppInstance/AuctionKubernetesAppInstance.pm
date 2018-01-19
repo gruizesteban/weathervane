@@ -82,6 +82,153 @@ sub setHost {
 		
 }
 
+override 'getServiceConfigParameters' => sub {
+	my ( $self, $service, $serviceType ) = @_;
+	my %serviceParameters = ();
+
+	my $users = $self->users;
+
+	if ( $serviceType eq "appServer" ) {
+
+		# For the app Servers, Auction needs to provide JVM options
+		my $jvmOpts = "";
+
+		# This variable is a holder for all spring profiles that are active
+		my $springProfilesActive = $self->getSpringProfilesActive();
+		$jvmOpts .= " -Dspring.profiles.active=$springProfilesActive ";
+
+		# Determine the sizes for the various application caches
+		# if the number of auctions wasn't explicitly set, determine based on
+		# the usersPerAuctionScaleFactor
+		my $auctions = $self->getParamValue('auctions');
+		if ( !$auctions ) {
+			$auctions = ceil( $users / $self->getParamValue('usersPerAuctionScaleFactor') );
+		}
+		my $numAppServers                  = $self->getNumActiveOfServiceType('appServer');
+		my $numWebServers                  = $self->getNumActiveOfServiceType('webServer');
+		my $authTokenCacheSize             = 2 * $users;
+		my $activeAuctionCacheSize         = 2 * $auctions;
+		my $itemsForAuctionCacheSize       = 2 * $auctions;
+		my $itemCacheSize                  = 20 * $auctions;
+		my $auctionRepresentationCacheSize = 2 * $auctions;
+		my $imageInfoCacheSize             = 100 * $auctions;
+
+		my $itemThumbnailImageCacheSize =
+		  $self->getParamValue('appServerThumbnailImageCacheSizeMultiplier') * $auctions;
+		my $itemPreviewImageCacheSize = $self->getParamValue('appServerPreviewImageCacheSizeMultiplier') * $auctions;
+		my $itemFullImageCacheSize    = $self->getParamValue('appServerFullImageCacheSizeMultiplier') * $auctions;
+		$jvmOpts .= " -DAUTHTOKENCACHESIZE=$authTokenCacheSize -DACTIVEAUCTIONCACHESIZE=$activeAuctionCacheSize ";
+		$jvmOpts .= " -DAUCTIONREPRESENTATIONCACHESIZE=$auctionRepresentationCacheSize ";
+		$jvmOpts .= " -DIMAGEINFOCACHESIZE=$imageInfoCacheSize -DITEMSFORAUCTIONCACHESIZE=$itemsForAuctionCacheSize ";
+		$jvmOpts .= " -DITEMCACHESIZE=$itemCacheSize ";
+
+		my $appServerCacheImpl = $self->getParamValue('appServerCacheImpl');
+		if ( $appServerCacheImpl eq 'ignite' ) {
+
+			$jvmOpts .= " -DAUTHTOKENCACHEMODE=" . $self->getParamValue('igniteAuthTokenCacheMode') . " ";
+	
+			my $copyOnRead = "false";
+			if ( $self->getParamValue('igniteCopyOnRead') ) {
+				$copyOnRead = "true";
+			}
+			$jvmOpts .= " -DIGNITECOPYONREAD=$copyOnRead ";
+
+			my $appServersRef = $self->getActiveServicesByType('appServer');
+			my $app1Hostname  = $appServersRef->[0]->getIpAddr();
+			$jvmOpts .= " -DIGNITEAPP1HOSTNAME=$app1Hostname ";
+		}
+		my $zookeeperConnectionString = "zookeeper-0:2181,zookeeper-1:2181,zookeeper-2:2181";
+		$jvmOpts .= " -DZOOKEEPERCONNECTIONSTRING=$zookeeperConnectionString ";
+
+		if ( $numWebServers > 1 ) {
+
+			# Don't need to cache images in app server if there is a web
+			# server since the web server caches.
+			$itemThumbnailImageCacheSize = $auctions;
+			$itemPreviewImageCacheSize   = 1;
+			$itemFullImageCacheSize      = 1;
+		}
+		else {
+			if ( $itemPreviewImageCacheSize == 0 ) {
+				$itemPreviewImageCacheSize = 1;
+			}
+
+			if ( $itemFullImageCacheSize == 0 ) {
+				$itemFullImageCacheSize = 1;
+			}
+		}
+		$jvmOpts .= " -DITEMTHUMBNAILIMAGECACHESIZE=$itemThumbnailImageCacheSize ";
+		$jvmOpts .= " -DITEMPREVIEWIMAGECACHESIZE=$itemPreviewImageCacheSize ";
+		$jvmOpts .= " -DITEMFULLIMAGECACHESIZE=$itemFullImageCacheSize ";
+
+		if ( $service->getParamValue('randomizeImages') ) {
+			$jvmOpts .= " -DRANDOMIZEIMAGES=true ";
+		}
+		else {
+			$jvmOpts .= " -DRANDOMIZEIMAGES=false ";
+		}
+
+		my $numCpus;
+		if ( $service->getParamValue('dockerCpus')) {
+			$numCpus = $service->getParamValue('dockerCpus');
+		}
+		else {
+			$numCpus = 2;
+		}
+		
+		my $highBidQueueConcurrency = $service->getParamValue('highBidQueueConcurrency');
+		if (!$highBidQueueConcurrency) {
+			$highBidQueueConcurrency = $numCpus;
+		}
+		my $newBidQueueConcurrency = $service->getParamValue('newBidQueueConcurrency');
+		if (!$newBidQueueConcurrency) {
+			$newBidQueueConcurrency = $numCpus;
+		}		
+		$jvmOpts .= " -DHIGHBIDQUEUECONCURRENCY=$highBidQueueConcurrency ";
+		$jvmOpts .= " -DNEWBIDQUEUECONCURRENCY=$newBidQueueConcurrency ";
+
+		# Turn on imageWriters in the application
+		if ( $service->getParamValue('useImageWriterThreads') ) {
+			if ( $service->getParamValue('imageWriterThreads') ) {
+
+				# value was set, overriding the default
+				$jvmOpts .= " -DIMAGEWRITERTHREADS=" . $service->getParamValue('imageWriterThreads') . " ";
+			}
+			else {
+
+				my $iwThreads = floor( $numCpus / 2.0 );
+				if ( $iwThreads < 1 ) {
+					$iwThreads = 1;
+				}
+				$jvmOpts .= " -DIMAGEWRITERTHREADS=" . $iwThreads . " ";
+
+			}
+
+			$jvmOpts .= " -DUSEIMAGEWRITERTHREADS=true ";
+		}
+		else {
+			$jvmOpts .= " -DUSEIMAGEWRITERTHREADS=false ";
+		}
+
+		$jvmOpts .= " -DNUMCLIENTUPDATETHREADS=" . $service->getParamValue('numClientUpdateThreads') . " ";
+		$jvmOpts .= " -DNUMAUCTIONEERTHREADS=" . $service->getParamValue('numAuctioneerThreads') . " ";
+
+		$jvmOpts .= " -DRABBITMQ_HOST=rabbitmq -DRABBITMQ_PORT=5672 ";
+
+		$jvmOpts .= " -DMONGODB_HOST=mongodb -DMONGODB_PORT=27017 ";
+
+		$jvmOpts .= " -DDBHOSTNAME=postgresql -DDBPORT=5432 ";
+
+		if ( !( $jvmOpts =~ /CompileThreshold/ ) ) {
+			$jvmOpts .= " -XX:CompileThreshold=2000 ";
+		}
+
+		$serviceParameters{"jvmOpts"} = $jvmOpts;
+	}
+
+	return \%serviceParameters;
+};
+
 override 'redeploy' => sub {
 	my ( $self, $logfile ) = @_;
 	my $logger = get_logger("Weathervane::AppInstance::AuctionAppInstance");
