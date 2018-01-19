@@ -193,11 +193,8 @@ sub prepareData {
 
 				# Load the data
 				$appInstance->stopServices("data", $logPath);
-				$appInstance->unRegisterPortNumbers();
 				$appInstance->clearDataServicesBeforeStart($logPath);
 				$appInstance->startServices("data", $logPath);
-				# Make sure that the services know their external port numbers
-				$self->appInstance->setExternalPortNumbers();
 
 				$logger->debug( "All data services configured and started for appInstance "
 					  . "$appInstanceNum of workload $workloadNum.  Checking if they are up." );
@@ -251,25 +248,21 @@ sub prepareData {
 
 	print $logHandle "Exec-ing perl /prepareData.pl  in container $name\n";
 	$logger->debug("Exec-ing perl /prepareData.pl  in container $name");
-	my $dockerHostString  = $self->host->dockerHostString;	
-	my $cmdOut = `$dockerHostString docker exec $name perl /prepareData.pl`;
-	print $logHandle "Output: $cmdOut, \$? = $?\n";
-	$logger->debug("Output: $cmdOut, \$? = $?");
-
-
+	my $cluster  = $self->host;	
+	$cluster->kubernetesExecOne("auctiondatamanager", "perl /prepareData.pl", $self->appInstance->namespace);
 	if ($?) {
 		$console_logger->error( "Data preparation process failed.  Check PrepareData.log for more information." );
 		return 0;
 	}
 
-	my $nosqlServersRef = $self->appInstance->getActiveServicesByType('nosqlServer');
-	my $nosqlServerRef = $nosqlServersRef->[0];
-	if (   ( $nosqlServerRef->numNosqlReplicas > 0 )
-		&& ( $nosqlServerRef->numNosqlShards == 0 ) )
-	{
-		$console_logger->info("Waiting for MongoDB Replicas to finish synchronizing.");
-		waitForMongodbReplicaSync( $self, $logHandle );
-	}
+#	my $nosqlServersRef = $self->appInstance->getActiveServicesByType('nosqlServer');
+#	my $nosqlServerRef = $nosqlServersRef->[0];
+#	if (   ( $nosqlServerRef->numNosqlReplicas > 0 )
+#		&& ( $nosqlServerRef->numNosqlShards == 0 ) )
+#	{
+#		$console_logger->info("Waiting for MongoDB Replicas to finish synchronizing.");
+#		waitForMongodbReplicaSync( $self, $logHandle );
+#	}
 
 	# stop the auctiondatamanager container
 	$self->stopAuctionKubernetesDataManagerContainer ($logHandle);
@@ -277,7 +270,6 @@ sub prepareData {
 	# stop the data services. They must be started in the main process
 	# so that the port numbers are available
 	$appInstance->stopServices("data", $logPath);
-	$appInstance->unRegisterPortNumbers();
 
 	close $logHandle;
 }

@@ -94,30 +94,6 @@ sub configure {
 
 }
 
-sub isUp {
-	my ( $self, $applog ) = @_;
-	my $hostname         = $self->getIpAddr();
-	my $port = $self->portMap->{"http"};
-	
-	my $response = `curl -s -w "%{http_code}\n" -o /dev/null http://$hostname:$port`;
-	print $applog "curl -s -w \"\%{http_code}\\n\" -o /dev/null http://$hostname:$port\n";
-	print $applog "$response\n"; 
-	
-	if ($response =~ /200$/) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
-sub isRunning {
-	my ( $self, $fileout ) = @_;
-	my $name = $self->getParamValue('dockerName');
-
-	return $self->host->dockerIsRunning($fileout, $name);
-
-}
-
 sub getLogFiles {
 	my ( $self, $destinationPath ) = @_;
 

@@ -92,25 +92,6 @@ sub configure {
 
 }
 
-sub isUp {
-	my ( $self, $fileout ) = @_;
-	
-	if ( !$self->isRunning($fileout) ) {
-		return 0;
-	}
-	
-	return 1;
-	
-}
-
-
-sub isRunning {
-	my ( $self, $fileout ) = @_;
-
-	return $self->host->dockerIsRunning($fileout, $self->getParamValue('dockerName'));
-
-}
-
 sub getLogFiles {
 	my ( $self, $destinationPath ) = @_;
 

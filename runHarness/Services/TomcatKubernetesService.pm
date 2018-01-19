@@ -119,31 +119,6 @@ sub configure {
 
 }
 
-sub isUp {
-	my ( $self, $applog ) = @_;
-	my $hostname = $self->getIpAddr();
-	my $port     = $self->portMap->{"http"};
-
-	my $response = `curl -s http://$hostname:$port/auction/healthCheck`;
-	print $applog "curl -s http://$hostname:$port/auction/healthCheck\n";
-	print $applog "$response\n";
-
-	if ( $response =~ /alive/ ) {
-		return 1;
-	}
-	else {
-		return 0;
-	}
-}
-
-sub isRunning {
-	my ( $self, $fileout ) = @_;
-	my $name = $self->getParamValue('dockerName');
-
-	return $self->host->dockerIsRunning( $fileout, $name );
-
-}
-
 sub getLogFiles {
 	my ( $self, $destinationPath ) = @_;
 	my $logger = get_logger("Weathervane::Services::TomcatDockerService");

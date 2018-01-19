@@ -165,32 +165,6 @@ sub clearDataBeforeStart {
 	
 }
 
-sub isUp {
-	my ( $self, $fileout ) = @_;
-
-	if ( !$self->isRunning($fileout) ) {
-		return 0;
-	}
-
-	return 1;
-
-}
-
-sub isRunning {
-	my ( $self, $fileout ) = @_;
-
-	my $sshConnectString = $self->host->sshConnectString;
-
-	my $cmdOut = `$sshConnectString \"ps x | grep mongo | grep -v grep\"`;
-	print $fileout $cmdOut;
-	if ( $cmdOut =~ /mongod\.conf/ ) {
-		return 1;
-	}
-	else {
-		return 0;
-	}
-}
-
 override 'sanityCheck' => sub {
 	my ($self, $cleanupLogDir) = @_;
 	my $console_logger = get_logger("Console");

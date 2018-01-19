@@ -91,6 +91,74 @@ sub kubernetesDelete {
 	
 }
 
+# Does a kubectl exec in the first pod where the impl label matches  
+# serviceImplName.  It does the exec in the container with the same name.
+sub kubernetesExecOne {
+	my ( $self, $serviceTypeImpl, $commandString, $namespace ) = @_;
+	my $logger         = get_logger("Weathervane::Clusters::KubernetesCluster");
+	my $console_logger = get_logger("Console");
+	$logger->debug("kubernetesExec exec $commandString in pod $podName, container $containerName, namespace $namespace");
+	$self->kubernetesSetContext();
+
+	# Get the list of pods
+	my $cmd;
+	my $outString;	
+	$cmd = "kubectl get pod --selector=impl=$serviceTypeImpl --no-headers --namespace=$namespace 2>&1";
+	$outString = `$cmd`;
+	$logger->debug("Command: $cmd");
+	$logger->debug("Output: $outString");
+	my @lines = split /\n/, $outString;
+	if ($#lines < 0) {
+		$console_logger->error("kubernetesExecOne: There are no pods with label $serviceTypeImpl in namespace $namespace");
+		exit(-1);
+	}
+	
+	# Get the name of the first pod
+	$lines[0] =~ /^(.*)\s+/;
+	my $podName = $1;
+	
+	$cmd = "kubectl exec $podName -c $serviceTypeImpl $commandString --namespace=$namespace 2>&1";
+	$outString = `$cmd`;
+	$logger->debug("Command: $cmd");
+	$logger->debug("Output: $outString");
+	
+	return $outString;
+	
+}
+
+# Does a kubectl exec in all p[ods] where the impl label matches  
+# serviceImplName.  It does the exec in the container with the same name.
+sub kubernetesExecAll {
+	my ( $self, $serviceTypeImpl, $commandString, $namespace ) = @_;
+	my $logger         = get_logger("Weathervane::Clusters::KubernetesCluster");
+	my $console_logger = get_logger("Console");
+	$logger->debug("kubernetesExec exec $commandString in pod $podName, container $containerName, namespace $namespace");
+	$self->kubernetesSetContext();
+
+	# Get the list of pods
+	my $cmd;
+	my $outString;	
+	$cmd = "kubectl get pod --selector=impl=$serviceTypeImpl --no-headers --namespace=$namespace 2>&1";
+	$outString = `$cmd`;
+	$logger->debug("Command: $cmd");
+	$logger->debug("Output: $outString");
+	my @lines = split /\n/, $outString;
+	if ($#lines < 0) {
+		$console_logger->error("kubernetesExecOne: There are no pods with label $serviceTypeImpl in namespace $namespace");
+		exit(-1);
+	}
+	
+	foreach my $line (@lines) { 
+		$line =~ /^(.*)\s+/;
+		my $podName = $1;
+	
+		$cmd = "kubectl exec $podName -c $serviceTypeImpl $commandString --namespace=$namespace 2>&1";
+		$outString = `$cmd`;
+		$logger->debug("Command: $cmd");
+		$logger->debug("Output: $outString");
+	}
+}
+
 sub kubernetesApply {
 	my ( $self, $fileName, $namespace ) = @_;
 	my $logger         = get_logger("Weathervane::Clusters::KubernetesCluster");
