@@ -35,8 +35,15 @@ sub getDataManager {
 
 	my $dataManager;
 	if ( $workloadType eq "auction" ) {
-		$dataManager = AuctionDataManager->new( 'paramHashRef' => $paramHashRef,
-		'appInstance' => $appInstance );
+		if ($paramHashRef->{'clusterName'}) {
+			if ($paramHashRef->{'clusterType'} eq 'kubernetes') {
+				$dataManager = AuctionKubernetesDataManager->new( 'paramHashRef' => $paramHashRef,
+				'appInstance' => $appInstance );
+			} 
+		} else {
+			$dataManager = AuctionDataManager->new( 'paramHashRef' => $paramHashRef,
+			'appInstance' => $appInstance );
+		}
 	}
 	else {
 		die "No matching workloadDriver for workload type $workloadType";

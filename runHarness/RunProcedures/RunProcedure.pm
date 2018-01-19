@@ -1224,7 +1224,7 @@ sub checkVersions {
 			next;
 		}
 
-		if (!$host->isNonDocker() || $host->getParamValue('vicHost') || ) {
+		if (!$host->isNonDocker() || $host->getParamValue('vicHost')) {
 			next;
 		}
 
