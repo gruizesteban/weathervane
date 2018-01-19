@@ -299,245 +299,238 @@ sub pretouchData {
 	my @pids            = ();
 	if ( $self->getParamValue('mongodbTouch') ) {
 
-		foreach $nosqlService (@$nosqlServersRef) {
-
-			my $cmdString;
-			my $cmdout;
-			my $pid;
-			if ( $self->getParamValue('mongodbTouchFull') ) {
-				$pid = fork();
-				if ( !defined $pid ) {
-					$console_logger->error("Couldn't fork a process: $!");
-					exit(-1);
-				}
-				elsif ( $pid == 0 ) {
-					print $logHandle "Touching imageFull collection to preload data and indexes\n";
-					$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.imageFull.find({'imageid' : {\$gt : 0}}, {'image' : 0}).count()' auctionFullImages", $namespace);
-					print $logHandle $cmdout;
-					$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.imageFull.find({'_id' : {\$ne : 0}}, {'image' : 0}).count()' auctionFullImages", $namespace);
-					print $logHandle $cmdout;
-					exit;
-				}
-				else {
-					push @pids, $pid;
-				}
-			}
-
-			if ( $self->getParamValue('mongodbTouchPreview') ) {
-				$pid = fork();
-				if ( !defined $pid ) {
-					$console_logger->error("Couldn't fork a process: $!");
-					exit(-1);
-				}
-				elsif ( $pid == 0 ) {
-					print $logHandle "Touching imagePreview collection to preload data and indexes\n";
-					$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.imagePreview.find({'imageid' : {\$gt : 0}}, {'image' : 0}).count()' auctionPreviewImages", $namespace);
-					print $logHandle $cmdout;
-					exit;
-				}
-				else {
-					push @pids, $pid;
-				}
-
-				$pid = fork();
-				if ( !defined $pid ) {
-					$console_logger->error("Couldn't fork a process: $!");
-					exit(-1);
-				}
-				elsif ( $pid == 0 ) {
-					$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.imagePreview.find({'_id' : {\$ne : 0}}, {'image' : 0}).count()' auctionPreviewImages", $namespace);
-					print $logHandle $cmdout;
-					exit;
-				}
-				else {
-					push @pids, $pid;
-				}
-			}
+		my $cmdString;
+		my $cmdout;
+		my $pid;
+		if ( $self->getParamValue('mongodbTouchFull') ) {
 			$pid = fork();
 			if ( !defined $pid ) {
 				$console_logger->error("Couldn't fork a process: $!");
 				exit(-1);
 			}
 			elsif ( $pid == 0 ) {
-				print $logHandle "Touching imageThumbnail collection to preload data and indexes\n";
-				$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.imageThumbnail.find({'imageid' : {\$gt : 0}}, {'image' : 0}).count()' auctionThumbnailImages", $namespace);
+				print $logHandle "Touching imageFull collection to preload data and indexes\n";
+				$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.imageFull.find({'imageid' : {\$gt : 0}}, {'image' : 0}).count()' auctionFullImages", $namespace);
+				print $logHandle $cmdout;
+				$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.imageFull.find({'_id' : {\$ne : 0}}, {'image' : 0}).count()' auctionFullImages", $namespace);
 				print $logHandle $cmdout;
 				exit;
 			}
 			else {
 				push @pids, $pid;
 			}
+		}
 
+		if ( $self->getParamValue('mongodbTouchPreview') ) {
 			$pid = fork();
 			if ( !defined $pid ) {
 				$console_logger->error("Couldn't fork a process: $!");
 				exit(-1);
 			}
 			elsif ( $pid == 0 ) {
-				$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo  --eval 'db.imageThumbnail.find({'_id' : {\$ne : 0}}, {'image' : 0}).count()' auctionThumbnailImages", $namespace);
-				exit;
-			}
-			else {
-				push @pids, $pid;
-			}
-
-			$pid = fork();
-			if ( !defined $pid ) {
-				$console_logger->error("Couldn't fork a process: $!");
-				exit(-1);
-			}
-			elsif ( $pid == 0 ) {
-				print $logHandle "Touching imageInfo collection to preload data and indexes\n";
-				$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.imageInfo.find({'filepath' : {\$ne : \"\"}}).count()' imageInfo", $namespace);
+				print $logHandle "Touching imagePreview collection to preload data and indexes\n";
+				$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.imagePreview.find({'imageid' : {\$gt : 0}}, {'image' : 0}).count()' auctionPreviewImages", $namespace);
 				print $logHandle $cmdout;
 				exit;
 			}
 			else {
 				push @pids, $pid;
 			}
-
 			$pid = fork();
 			if ( !defined $pid ) {
 				$console_logger->error("Couldn't fork a process: $!");
 				exit(-1);
 			}
 			elsif ( $pid == 0 ) {
-				$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.imageInfo.find({'_id' : {\$ne : 0}}).count()' imageInfo", $namespace);
-				exit;
-			}
-			else {
-				push @pids, $pid;
-			}
-
-			$pid = fork();
-			if ( !defined $pid ) {
-				$console_logger->error("Couldn't fork a process: $!");
-				exit(-1);
-			}
-			elsif ( $pid == 0 ) {
-				print $logHandle "Touching attendanceRecord collection to preload data and indexes\n";
-				$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.attendanceRecord.find({'_id' : {\$ne : 0}}).count()' attendanceRecord", $namespace);
+				$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.imagePreview.find({'_id' : {\$ne : 0}}, {'image' : 0}).count()' auctionPreviewImages", $namespace);
 				print $logHandle $cmdout;
 				exit;
 			}
 			else {
 				push @pids, $pid;
 			}
+		}
+		$pid = fork();
+		if ( !defined $pid ) {
+			$console_logger->error("Couldn't fork a process: $!");
+			exit(-1);
+		}
+		elsif ( $pid == 0 ) {
+			print $logHandle "Touching imageThumbnail collection to preload data and indexes\n";
+			$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.imageThumbnail.find({'imageid' : {\$gt : 0}}, {'image' : 0}).count()' auctionThumbnailImages", $namespace);
+			print $logHandle $cmdout;
+			exit;
+		}
+		else {
+			push @pids, $pid;
+		}
 
-			$pid = fork();
-			if ( !defined $pid ) {
-				$console_logger->error("Couldn't fork a process: $!");
-				exit(-1);
-			}
-			elsif ( $pid == 0 ) {
-				$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.attendanceRecord.find({'userId' : {\$gt : 0}, 'timestamp' : {\$gt:ISODate(\"2000-01-01\")}}).count()' attendanceRecord", $namespace);
-				print $logHandle $cmdout;
-				exit;
-			}
-			else {
-				push @pids, $pid;
-			}
+		$pid = fork();
+		if ( !defined $pid ) {
+			$console_logger->error("Couldn't fork a process: $!");
+			exit(-1);
+		}
+		elsif ( $pid == 0 ) {
+			$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo  --eval 'db.imageThumbnail.find({'_id' : {\$ne : 0}}, {'image' : 0}).count()' auctionThumbnailImages", $namespace);
+			exit;
+		}
+		else {
+			push @pids, $pid;
+		}
 
-			$pid = fork();
-			if ( !defined $pid ) {
-				$console_logger->error("Couldn't fork a process: $!");
-				exit(-1);
-			}
-			elsif ( $pid == 0 ) {
-				$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.attendanceRecord.find({'userId' : {\$gt : 0}, '_id' : {\$ne: 0 }}).count()' attendanceRecord", $namespace);
-				print $logHandle $cmdout;
-				exit;
-			}
-			else {
-				push @pids, $pid;
-			}
+		$pid = fork();
+		if ( !defined $pid ) {
+			$console_logger->error("Couldn't fork a process: $!");
+			exit(-1);
+		}
+		elsif ( $pid == 0 ) {
+			print $logHandle "Touching imageInfo collection to preload data and indexes\n";
+			$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.imageInfo.find({'filepath' : {\$ne : \"\"}}).count()' imageInfo", $namespace);
+			print $logHandle $cmdout;
+			exit;
+		}
+		else {
+			push @pids, $pid;
+		}
 
-			$pid = fork();
-			if ( !defined $pid ) {
-				$console_logger->error("Couldn't fork a process: $!");
-				exit(-1);
-			}
-			elsif ( $pid == 0 ) {
-				$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.attendanceRecord.find({'userId' : {\$gt : 0}, 'auctionId' : {\$gt: 0 }, 'state' :{\$ne : \"\"} }).count()' attendanceRecord", $namespace);
-				print $logHandle $cmdout;
-				exit;
-			}
-			else {
-				push @pids, $pid;
-			}
+		$pid = fork();
+		if ( !defined $pid ) {
+			$console_logger->error("Couldn't fork a process: $!");
+			exit(-1);
+		}
+		elsif ( $pid == 0 ) {
+			$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.imageInfo.find({'_id' : {\$ne : 0}}).count()' imageInfo", $namespace);
+			exit;
+		}
+		else {
+			push @pids, $pid;
+		}
 
-			$pid = fork();
-			if ( !defined $pid ) {
-				$console_logger->error("Couldn't fork a process: $!");
-				exit(-1);
-			}
-			elsif ( $pid == 0 ) {
-				$cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.attendanceRecord.find({'auctionId' : {\$gt : 0}}).count()' attendanceRecord", $namespace);
-				print $logHandle $cmdout;
-				exit;
-			}
-			else {
-				push @pids, $pid;
-			}
+		$pid = fork();
+		if ( !defined $pid ) {
+			$console_logger->error("Couldn't fork a process: $!");
+			exit(-1);
+		}
+		elsif ( $pid == 0 ) {
+			print $logHandle "Touching attendanceRecord collection to preload data and indexes\n";
+			$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.attendanceRecord.find({'_id' : {\$ne : 0}}).count()' attendanceRecord", $namespace);
+			print $logHandle $cmdout;
+			exit;
+		}
+		else {
+			push @pids, $pid;
+		}
 
-			$pid = fork();
-			if ( !defined $pid ) {
-				$console_logger->error("Couldn't fork a process: $!");
-				exit(-1);
-			}
-			elsif ( $pid == 0 ) {
-				print $logHandle "Touching bid collection to preload data and indexes\n";
-				$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.bid.find({'_id' : {\$ne : 0}}).count()' bid", $namespace);
-				print $logHandle $cmdout;
-				exit;
-			}
-			else {
-				push @pids, $pid;
-			}
+		$pid = fork();
+		if ( !defined $pid ) {
+			$console_logger->error("Couldn't fork a process: $!");
+			exit(-1);
+		}
+		elsif ( $pid == 0 ) {
+			$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.attendanceRecord.find({'userId' : {\$gt : 0}, 'timestamp' : {\$gt:ISODate(\"2000-01-01\")}}).count()' attendanceRecord", $namespace);
+			print $logHandle $cmdout;
+			exit;
+		}
+		else {
+			push @pids, $pid;
+		}
 
-			$pid = fork();
-			if ( !defined $pid ) {
-				$console_logger->error("Couldn't fork a process: $!");
-				exit(-1);
-			}
-			elsif ( $pid == 0 ) {
-				$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.bid.find({'bidderId' : {\$gt : 0}, 'bidTime' : {\$gt:ISODate(\"2000-01-01\")}}).count()' bid", $namespace);
-				print $logHandle $cmdout;
-				exit;
-			}
-			else {
-				push @pids, $pid;
-			}
+		$pid = fork();
+		if ( !defined $pid ) {
+			$console_logger->error("Couldn't fork a process: $!");
+			exit(-1);
+		}
+		elsif ( $pid == 0 ) {
+			$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.attendanceRecord.find({'userId' : {\$gt : 0}, '_id' : {\$ne: 0 }}).count()' attendanceRecord", $namespace);
+			print $logHandle $cmdout;
+			exit;
+		}
+		else {
+			push @pids, $pid;
+		}
 
-			$pid = fork();
-			if ( !defined $pid ) {
-				$console_logger->error("Couldn't fork a process: $!");
-				exit(-1);
-			}
-			elsif ( $pid == 0 ) {
-				$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.bid.find({'bidderId' : {\$gt : 0}, '_id' : {\$ne: 0 }}).count()' bid", $namespace);
-				print $logHandle $cmdout;
-				exit;
-			}
-			else {
-				push @pids, $pid;
-			}
+		$pid = fork();
+		if ( !defined $pid ) {
+			$console_logger->error("Couldn't fork a process: $!");
+			exit(-1);
+		}
+		elsif ( $pid == 0 ) {
+			$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.attendanceRecord.find({'userId' : {\$gt : 0}, 'auctionId' : {\$gt: 0 }, 'state' :{\$ne : \"\"} }).count()' attendanceRecord", $namespace);
+			print $logHandle $cmdout;
+			exit;
+		}
+		else {
+			push @pids, $pid;
+		}
 
-			$pid = fork();
-			if ( !defined $pid ) {
-				$console_logger->error("Couldn't fork a process: $!");
-				exit(-1);
-			}
-			elsif ( $pid == 0 ) {
-				$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.bid.find({'itemid' : {\$gt : 0}}).count()' bid", $namespace);
-				print $logHandle $cmdout;
-				exit;
-			}
-			else {
-				push @pids, $pid;
-			}
+		$pid = fork();
+		if ( !defined $pid ) {
+			$console_logger->error("Couldn't fork a process: $!");
+			exit(-1);
+		}
+		elsif ( $pid == 0 ) {
+			$cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.attendanceRecord.find({'auctionId' : {\$gt : 0}}).count()' attendanceRecord", $namespace);
+			print $logHandle $cmdout;
+			exit;
+		}
+		else {
+			push @pids, $pid;
+		}
+		$pid = fork();
+		if ( !defined $pid ) {
+			$console_logger->error("Couldn't fork a process: $!");
+			exit(-1);
+		}
+		elsif ( $pid == 0 ) {
+			print $logHandle "Touching bid collection to preload data and indexes\n";
+			$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.bid.find({'_id' : {\$ne : 0}}).count()' bid", $namespace);
+			print $logHandle $cmdout;
+			exit;
+		}
+		else {
+			push @pids, $pid;
+		}
 
+		$pid = fork();
+		if ( !defined $pid ) {
+		$console_logger->error("Couldn't fork a process: $!");
+			exit(-1);
+		}
+		elsif ( $pid == 0 ) {
+			$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.bid.find({'bidderId' : {\$gt : 0}, 'bidTime' : {\$gt:ISODate(\"2000-01-01\")}}).count()' bid", $namespace);
+			print $logHandle $cmdout;
+			exit;
+		}
+		else {
+			push @pids, $pid;
+		}
+		$pid = fork();
+		if ( !defined $pid ) {
+			$console_logger->error("Couldn't fork a process: $!");
+			exit(-1);
+		}
+		elsif ( $pid == 0 ) {
+			$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.bid.find({'bidderId' : {\$gt : 0}, '_id' : {\$ne: 0 }}).count()' bid", $namespace);
+			print $logHandle $cmdout;
+			exit;
+		}
+		else {
+			push @pids, $pid;
+		}
 
+		$pid = fork();
+		if ( !defined $pid ) {
+			$console_logger->error("Couldn't fork a process: $!");
+			exit(-1);
+		}
+		elsif ( $pid == 0 ) {
+			$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.bid.find({'itemid' : {\$gt : 0}}).count()' bid", $namespace);
+			print $logHandle $cmdout;
+			exit;
+		}
+		else {
+			push @pids, $pid;
+		}
 	}
 
 	foreach my $pid (@pids) {
@@ -648,8 +641,8 @@ sub isDataLoaded {
 	open( $applog, ">$logName" )
 	  || die "Error opening /$logName:$!";
 
-	print $applog "Exec-ing perl /isDataLoaded.pl  in container $name\n";
-	$logger->debug("Exec-ing perl /isDataLoaded.pl  in container $name");
+	print $applog "Exec-ing perl /isDataLoaded.pl\n";
+	$logger->debug("Exec-ing perl /isDataLoaded.pl");
 	$cluster->kubernetesExecOne("auctiondatamanager", "perl /isDataLoaded.pl", $namespace);
 	close $applog;
 	if ($?) {
