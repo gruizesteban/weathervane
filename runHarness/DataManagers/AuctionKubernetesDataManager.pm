@@ -56,6 +56,8 @@ sub startAuctionKubernetesDataManagerContainer {
 
 	my $namespace = $self->appInstance->namespace;
 	my $configDir = $self->getParamValue('configDir');
+	my $workloadNum    = $self->getParamValue('workloadNum');
+	my $appInstanceNum = $self->getParamValue('appInstanceNum');
 	my $maxDuration = $self->getParamValue('maxDuration');
 	my $totalTime =
 	  $self->getParamValue('rampUp') + $self->getParamValue('steadyState') + $self->getParamValue('rampDown');
@@ -120,7 +122,7 @@ sub stopAuctionKubernetesDataManagerContainer {
 	my $logger         = get_logger("Weathervane::DataManager::AuctionKubernetesDataManager");
 	my $cluster = $self->host;
 	
-	$cluster->kubernetesDelete("configMap", "$auctionDataManager-config", $self->appInstance->namespace);
+	$cluster->kubernetesDelete("configMap", "auctionDataManager-config", $self->appInstance->namespace);
 	$cluster->kubernetesDelete("deployment", "auctionDataManager", $self->appInstance->namespace);
 
 }
