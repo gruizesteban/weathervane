@@ -773,7 +773,6 @@ sub cleanData {
 			$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'printjson(db.runCommand({ compact: \"imageThumbnail\" }))' auctionThumbnailImages", $namespace);
 			print $logHandle $cmdout;
 
-		}
 	}
 }
 
