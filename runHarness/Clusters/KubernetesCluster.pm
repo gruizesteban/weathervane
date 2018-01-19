@@ -97,7 +97,7 @@ sub kubernetesExecOne {
 	my ( $self, $serviceTypeImpl, $commandString, $namespace ) = @_;
 	my $logger         = get_logger("Weathervane::Clusters::KubernetesCluster");
 	my $console_logger = get_logger("Console");
-	$logger->debug("kubernetesExec exec $commandString in pod $podName, container $containerName, namespace $namespace");
+	$logger->debug("kubernetesExecOne exec $commandString for serviceTypeImpl $serviceTypeImpl, namespace $namespace");
 	$self->kubernetesSetContext();
 
 	# Get the list of pods
@@ -132,7 +132,7 @@ sub kubernetesExecAll {
 	my ( $self, $serviceTypeImpl, $commandString, $namespace ) = @_;
 	my $logger         = get_logger("Weathervane::Clusters::KubernetesCluster");
 	my $console_logger = get_logger("Console");
-	$logger->debug("kubernetesExec exec $commandString in pod $podName, container $containerName, namespace $namespace");
+	$logger->debug("kubernetesExecAll exec $commandString for serviceTypeImpl $serviceTypeImpl, namespace $namespace");
 	$self->kubernetesSetContext();
 
 	# Get the list of pods
