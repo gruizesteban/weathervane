@@ -30,7 +30,7 @@ spec:
       labels:
         app: auction
         tier: dm
-        impl: auctiondm
+        impl: auctiondatamanager
     spec:
       containers:
       - image: hrosenbe/weathervane-auctiondatamanager:1.1.0
