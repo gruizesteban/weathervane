@@ -114,7 +114,7 @@ sub kubernetesExecOne {
 	}
 	
 	# Get the name of the first pod
-	$lines[0] =~ /^(.*)\s+/;
+	$lines[0] =~ /^([a-zA-Z0-9\-]*)\s+/;
 	my $podName = $1;
 	
 	$cmd = "kubectl exec $podName -c $serviceTypeImpl $commandString --namespace=$namespace 2>&1";
@@ -149,7 +149,7 @@ sub kubernetesExecAll {
 	}
 	
 	foreach my $line (@lines) { 
-		$line =~ /^(.*)\s+/;
+		$line =~ /^([a-zA-Z0-9\-]*)\s+/;
 		my $podName = $1;
 	
 		$cmd = "kubectl exec $podName -c $serviceTypeImpl $commandString --namespace=$namespace 2>&1";

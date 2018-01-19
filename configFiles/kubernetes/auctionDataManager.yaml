@@ -34,7 +34,7 @@ spec:
     spec:
       containers:
       - image: hrosenbe/weathervane-auctiondatamanager:1.1.0
-        name: cm
+        name: auctiondatamanager
         imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:
