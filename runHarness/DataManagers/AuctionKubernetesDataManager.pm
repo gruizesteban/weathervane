@@ -469,7 +469,7 @@ sub pretouchData {
 			exit(-1);
 		}
 		elsif ( $pid == 0 ) {
-			$cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.attendanceRecord.find({'auctionId' : {\$gt : 0}}).count()' attendanceRecord", $namespace);
+			$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'db.attendanceRecord.find({'auctionId' : {\$gt : 0}}).count()' attendanceRecord", $namespace);
 			print $logHandle $cmdout;
 			exit;
 		}

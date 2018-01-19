@@ -156,7 +156,6 @@ sub clearDataAfterStart {
 
 sub clearDataBeforeStart {
 	my ( $self, $logPath ) = @_;
-	my $hostname         = $self->host->hostName;
 	my $name        = $self->getParamValue('dockerName');
 	my $logger = get_logger("Weathervane::Services::MongodbKubernetesService");
 	$logger->debug("clearDataBeforeStart for $name");
