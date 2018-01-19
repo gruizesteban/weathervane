@@ -93,19 +93,19 @@ sub configure {
 	
 	while ( my $inline = <FILEIN> ) {
 
-		if ( $inline =~ /TOMCAT_JVMOPTS/ ) {
+		if ( $inline =~ /TOMCAT_JVMOPTS:/ ) {
 			print FILEOUT "  TOMCAT_JVMOPTS: \"$completeJVMOpts\"\n";
 		}
-		elsif ( $inline =~ /TOMCAT_THREADS/ ) {
-			print FILEOUT "  TOMCAT_THREADS: $threads\n";
+		elsif ( $inline =~ /TOMCAT_THREADS:/ ) {
+			print FILEOUT "  TOMCAT_THREADS: \"$threads\"\n";
 		}
-		elsif ( $inline =~ /TOMCAT_JDBC_CONNECTIONS/ ) {
-			print FILEOUT "  TOMCAT_JDBC_CONNECTIONS: $connections\n";
+		elsif ( $inline =~ /TOMCAT_JDBC_CONNECTIONS:/ ) {
+			print FILEOUT "  TOMCAT_JDBC_CONNECTIONS: \"$connections\"\n";
 		}
-		elsif ( $inline =~ /TOMCAT_JDBC_MAXIDLE/ ) {
-			print FILEOUT "  TOMCAT_JDBC_MAXIDLE: $maxIdle\n";
+		elsif ( $inline =~ /TOMCAT_JDBC_MAXIDLE:/ ) {
+			print FILEOUT "  TOMCAT_JDBC_MAXIDLE: \"$maxIdle\"\n";
 		}
-		elsif ( $inline =~ /TOMCAT_CONNECTIONS/ ) {
+		elsif ( $inline =~ /TOMCAT_CONNECTIONS:/ ) {
 			print FILEOUT "  TOMCAT_CONNECTIONS: $maxConnections\n";
 		}
 		else {

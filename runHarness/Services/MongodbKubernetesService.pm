@@ -122,20 +122,20 @@ sub configure {
 	
 	while ( my $inline = <FILEIN> ) {
 
-		if ( $inline =~ /CLEARBEFORESTART/ ) {
-			print FILEOUT "  CLEARBEFORESTART: " . $self->clearBeforeStart . "\n";
+		if ( $inline =~ /CLEARBEFORESTART:/ ) {
+			print FILEOUT "  CLEARBEFORESTART: \"" . $self->clearBeforeStart . "\"\n";
 		}
-		elsif ( $inline =~ /NUMSHARDS/ ) {
-			print FILEOUT "  NUMSHARDS: $numShards\n";
+		elsif ( $inline =~ /NUMSHARDS:/ ) {
+			print FILEOUT "  NUMSHARDS: \"$numShards\"\n";
 		}
-		elsif ( $inline =~ /NUMREPLICAS/ ) {
-			print FILEOUT "  NUMREPLICAS: $numReplicas\n";
+		elsif ( $inline =~ /NUMREPLICAS:/ ) {
+			print FILEOUT "  NUMREPLICAS: \"$numReplicas\"\n";
 		}
-		elsif ( $inline =~ /ISCFGSVR/ ) {
-			print FILEOUT "  ISCFGSVR: 0\n";
+		elsif ( $inline =~ /ISCFGSVR:/ ) {
+			print FILEOUT "  ISCFGSVR: \"0\"\n";
 		}
-		elsif ( $inline =~ /ISMONGOS/ ) {
-			print FILEOUT "  ISMONGOS: 0\n";
+		elsif ( $inline =~ /ISMONGOS:/ ) {
+			print FILEOUT "  ISMONGOS: \"0\"\n";
 		}
 		elsif ( $inline =~ /(\s+)imagePullPolicy/ ) {
 			print FILEOUT "${1}imagePullPolicy: " . $self->appInstance->imagePullPolicy . "\n";

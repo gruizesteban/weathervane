@@ -62,19 +62,19 @@ sub configure {
 	
 	while ( my $inline = <FILEIN> ) {
 
-		if ( $inline =~ /WORKERCONNECTIONS/ ) {
-			print FILEOUT "  WORKERCONNECTIONS: $workerConnections\n";
+		if ( $inline =~ /WORKERCONNECTIONS:/ ) {
+			print FILEOUT "  WORKERCONNECTIONS: \"$workerConnections\"\n";
 		}
-		elsif ( $inline =~ /PERSERVERCONNECTIONS/ ) {
-			print FILEOUT "  PERSERVERCONNECTIONS: $perServerConnections\n";
+		elsif ( $inline =~ /PERSERVERCONNECTIONS:/ ) {
+			print FILEOUT "  PERSERVERCONNECTIONS: \"$perServerConnections\"\n";
 		}
-		elsif ( $inline =~ /KEEPALIVETIMEOUT/ ) {
-			print FILEOUT "  KEEPALIVETIMEOUT: " . $self->getParamValue('nginxKeepaliveTimeout') . "\n";
+		elsif ( $inline =~ /KEEPALIVETIMEOUT:/ ) {
+			print FILEOUT "  KEEPALIVETIMEOUT: \"" . $self->getParamValue('nginxKeepaliveTimeout') . "\"\n";
 		}
-		elsif ( $inline =~ /MAXKEEPALIVEREQUESTS/ ) {
-			print FILEOUT "  MAXKEEPALIVEREQUESTS: " . $self->getParamValue('nginxMaxKeepaliveRequests') . "\n";
+		elsif ( $inline =~ /MAXKEEPALIVEREQUESTS:/ ) {
+			print FILEOUT "  MAXKEEPALIVEREQUESTS: \"" . $self->getParamValue('nginxMaxKeepaliveRequests') . "\"\n";
 		}
-		elsif ( $inline =~ /IMAGESTORETYPE/ ) {
+		elsif ( $inline =~ /IMAGESTORETYPE:/ ) {
 			print FILEOUT "  IMAGESTORETYPE: \"" . $self->getParamValue('imageStoreType') . "\"\n";
 		}
 		elsif ( $inline =~ /(\s+)imagePullPolicy/ ) {

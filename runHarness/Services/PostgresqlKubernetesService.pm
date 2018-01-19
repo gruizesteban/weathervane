@@ -97,19 +97,19 @@ sub configure {
 	
 	while ( my $inline = <FILEIN> ) {
 
-		if ( $inline =~ /POSTGRESTOTALMEM/ ) {
-			print FILEOUT "  POSTGRESTOTALMEM: $totalMemory\n";
+		if ( $inline =~ /POSTGRESTOTALMEM:/ ) {
+			print FILEOUT "  POSTGRESTOTALMEM: \"$totalMemory\"\n";
 		}
-		elsif ( $inline =~ /POSTGRESTOTALMEMUNIT/ ) {
-			print FILEOUT "  POSTGRESTOTALMEMUNIT: $totalMemoryUnit\n";
+		elsif ( $inline =~ /POSTGRESTOTALMEMUNIT:/ ) {
+			print FILEOUT "  POSTGRESTOTALMEMUNIT: \"$totalMemoryUnit\"\n";
 		}
-		elsif ( $inline =~ /POSTGRESSHAREDBUFFERS/ ) {
-			print FILEOUT "  POSTGRESSHAREDBUFFERS: " . $self->getParamValue('postgresqlSharedBuffers') . "\n";
+		elsif ( $inline =~ /POSTGRESSHAREDBUFFERS:/ ) {
+			print FILEOUT "  POSTGRESSHAREDBUFFERS: \"" . $self->getParamValue('postgresqlSharedBuffers') . "\"\n";
 		}
-		elsif ( $inline =~ /POSTGRESSHAREDBUFFERSPCT/ ) {
-			print FILEOUT "  POSTGRESSHAREDBUFFERSPCT: " . $self->getParamValue('postgresqlSharedBuffersPct') . "\n";
+		elsif ( $inline =~ /POSTGRESSHAREDBUFFERSPCT:/ ) {
+			print FILEOUT "  POSTGRESSHAREDBUFFERSPCT: \"" . $self->getParamValue('postgresqlSharedBuffersPct') . "\"\n";
 		}
-		elsif ( $inline =~ /POSTGRESEFFECTIVECACHESIZE/ ) {
+		elsif ( $inline =~ /POSTGRESEFFECTIVECACHESIZE:/ ) {
 			print FILEOUT "  POSTGRESEFFECTIVECACHESIZE: \"" . $self->getParamValue('postgresqlEffectiveCacheSize') . "\"\n";
 		}
 		elsif ( $inline =~ /POSTGRESEFFECTIVECACHESIZEPCT/ ) {
