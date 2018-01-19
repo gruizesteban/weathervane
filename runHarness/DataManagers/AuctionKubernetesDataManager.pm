@@ -73,31 +73,31 @@ sub startAuctionKubernetesDataManagerContainer {
 	
 	while ( my $inline = <FILEIN> ) {
 
-		if ( $inline =~ /USERS/ ) {
-			print FILEOUT "USERS: $users\n";
+		if ( $inline =~ /USERS:/ ) {
+			print FILEOUT "  USERS: $users\n";
 		}
-		elsif ( $inline =~ /MAXUSERS/ ) {
+		elsif ( $inline =~ /MAXUSERS:/ ) {
 			print FILEOUT "  MAXUSERS: " . $self->getParamValue('maxUsers') . "\n";
 		}
-		elsif ( $inline =~ /USERSPERAUCTIONSCALEFACTOR/ ) {
+		elsif ( $inline =~ /USERSPERAUCTIONSCALEFACTOR:/ ) {
 			print FILEOUT "  USERSPERAUCTIONSCALEFACTOR: " . $self->getParamValue('usersPerAuctionScaleFactor') . "\n";
 		}
-		elsif ( $inline =~ /WORKLOADNUM/ ) {
+		elsif ( $inline =~ /WORKLOADNUM:/ ) {
 			print FILEOUT "  WORKLOADNUM: $workloadNum\n";
 		}
-		elsif ( $inline =~ /APPINSTANCENUM/ ) {
+		elsif ( $inline =~ /APPINSTANCENUM:/ ) {
 			print FILEOUT "  APPINSTANCENUM: $appInstanceNum\n";
 		}
-		elsif ( $inline =~ /NUMNOSQLSHARDS/ ) {
+		elsif ( $inline =~ /NUMNOSQLSHARDS:/ ) {
 			print FILEOUT "  NUMNOSQLSHARDS: $numNosqlShards\n";
 		}
-		elsif ( $inline =~ /NUMNOSQLREPLICAS/ ) {
+		elsif ( $inline =~ /NUMNOSQLREPLICAS:/ ) {
 			print FILEOUT "  NUMNOSQLREPLICAS: $numNosqlReplicas\n";
 		}
-		elsif ( $inline =~ /SPRINGPROFILESACTIVE/ ) {
+		elsif ( $inline =~ /SPRINGPROFILESACTIVE:/ ) {
 			print FILEOUT "  SPRINGPROFILESACTIVE: $springProfilesActive\n";
 		}
-		elsif ( $inline =~ /MAXDURATION/ ) {
+		elsif ( $inline =~ /MAXDURATION:/ ) {
 			print FILEOUT "  MAXDURATION: " . max( $maxDuration, $totalTime ) . "\n";
 		}
 		elsif ( $inline =~ /(\s+)imagePullPolicy/ ) {
