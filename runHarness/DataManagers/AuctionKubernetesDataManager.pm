@@ -549,8 +549,8 @@ sub loadData {
 
 	my $workloadNum    = $self->getParamValue('workloadNum');
 	my $appInstanceNum = $self->getParamValue('appInstanceNum');
-	my $logName          = "$logPath/loadData-W${workloadNum}I${appInstanceNum}-$hostname.log";
 	my $cluster = $self->host;
+	my $logName          = "$logPath/loadData-W${workloadNum}I${appInstanceNum}.log";
 	my $namespace = $self->appInstance->namespace;
 	
 	$logger->debug("loadData for workload $workloadNum, appInstance $appInstanceNum");
@@ -636,14 +636,14 @@ sub isDataLoaded {
 	my $appInstanceNum = $self->getParamValue('appInstanceNum');
 	$logger->debug("isDataLoaded for workload $workloadNum, appInstance $appInstanceNum");
 
-	my $logName = "$logPath/isDataLoaded-W${workloadNum}I${appInstanceNum}-$hostname.log";
+	my $logName = "$logPath/isDataLoaded-W${workloadNum}I${appInstanceNum}.log";
 	my $applog;
 	open( $applog, ">$logName" )
 	  || die "Error opening /$logName:$!";
 
 	print $applog "Exec-ing perl /isDataLoaded.pl\n";
 	$logger->debug("Exec-ing perl /isDataLoaded.pl");
-	$cluster->kubernetesExecOne("auctiondatamanager", "perl /isDataLoaded.pl", $namespace);
+	my $cmdOut = $cluster->kubernetesExecOne("auctiondatamanager", "perl /isDataLoaded.pl", $namespace);
 	close $applog;
 	if ($?) {
 		$logger->debug( "Data is not loaded for workload $workloadNum, appInstance $appInstanceNum. \$cmdOut = $cmdOut" );
@@ -707,7 +707,7 @@ sub cleanData {
 		);
 		return 0;
 	}
-
+	
 #	my $nosqlServersRef = $self->appInstance->getActiveServicesByType('nosqlServer');
 #	my $nosqlService = $nosqlServersRef->[0];
 #	if (   ( $nosqlService->numNosqlReplicas > 0 )
@@ -720,27 +720,21 @@ sub cleanData {
 	if ( $self->getParamValue('mongodbCompact') ) {
 
 		# Compact all mongodb collections
-		foreach my $nosqlService (@$nosqlServersRef) {
-			my $hostname         = $nosqlService->getIpAddr();
-			my $port             = $nosqlService->portMap->{'mongod'};
-			print $logHandle "Compacting MongoDB collections on $hostname\n";
+			print $logHandle "Compacting MongoDB collections for appInstance $appInstanceNum of workload $workloadNum.\n";
 			$logger->debug(
-				"cleanData. Compacting MongoDB collections on $hostname for workload ",
+				"cleanData. Compacting MongoDB collections for appInstance $appInstanceNum of workload $workloadNum. "	);
+
+			$logger->debug(
+				"cleanData. Compacting attendanceRecord collection for workload ",
 				$workloadNum, " appInstance ",
 				$appInstanceNum
 			);
 
-			$logger->debug(
-				"cleanData. Compacting attendanceRecord collection on $hostname for workload ",
-				$workloadNum, " appInstance ",
-				$appInstanceNum
-			);
-
-			$cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'printjson(db.runCommand({ compact: \"attendanceRecord\" }))' attendanceRecord", $namespace);
+			my $cmdout = $cluster->kubernetesExecOne("mongodb", "mongo --eval 'printjson(db.runCommand({ compact: \"attendanceRecord\" }))' attendanceRecord", $namespace);
 			print $logHandle $cmdout;
 
 			$logger->debug(
-				"cleanData. Compacting bid collection on $hostname for workload ",
+				"cleanData. Compacting bid collection  for workload ",
 				$workloadNum, " appInstance ",
 				$appInstanceNum
 			);
@@ -748,7 +742,7 @@ sub cleanData {
 			print $logHandle $cmdout;
 
 			$logger->debug(
-				"cleanData. Compacting imageInfo collection on $hostname for workload ",
+				"cleanData. Compacting imageInfo collection  for workload ",
 				$workloadNum, " appInstance ",
 				$appInstanceNum
 			);
@@ -756,7 +750,7 @@ sub cleanData {
 			print $logHandle $cmdout;
 
 			$logger->debug(
-				"cleanData. Compacting imageFull collection on $hostname for workload ",
+				"cleanData. Compacting imageFull collection  for workload ",
 				$workloadNum, " appInstance ",
 				$appInstanceNum
 			);
@@ -764,7 +758,7 @@ sub cleanData {
 			print $logHandle $cmdout;
 
 			$logger->debug(
-				"cleanData. Compacting imagePreview collection on $hostname for workload ",
+				"cleanData. Compacting imagePreview collection  for workload ",
 				$workloadNum, " appInstance ",
 				$appInstanceNum
 			);
@@ -772,7 +766,7 @@ sub cleanData {
 			print $logHandle $cmdout;
 
 			$logger->debug(
-				"cleanData. Compacting imageThumbnail collection on $hostname for workload ",
+				"cleanData. Compacting imageThumbnail collection  for workload ",
 				$workloadNum, " appInstance ",
 				$appInstanceNum
 			);
