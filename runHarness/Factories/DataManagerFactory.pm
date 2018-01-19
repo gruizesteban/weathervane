@@ -16,6 +16,7 @@ package DataManagerFactory;
 use Moose;
 use MooseX::Storage;
 use DataManagers::AuctionDataManager;
+use DataManagers::AuctionKubernetesDataManager;
 use Parameters qw(getParamValue);
 use WeathervaneTypes;
 no if $] >= 5.017011, warnings => 'experimental::smartmatch';
