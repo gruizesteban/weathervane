@@ -587,10 +587,10 @@ sub loadData {
 	}
 	
 	# Get the name of the first pod
-	$lines[0] =~ /^([a-zA-Z0-9\-]*)\s+/;
+	$lines[0] =~ /^\s*([a-zA-Z0-9\-]+)/;
 	my $podName = $1;
 
-	open my $pipe, "kubectl exec $podName perl /loadData.pl  |"   or die "Couldn't execute program: $!";
+	open my $pipe, "kubectl exec -c auctiondatamanager $podName perl /loadData.pl  |"   or die "Couldn't execute program: $!";
  	while ( defined( my $line = <$pipe> )  ) {
 		chomp($line);
 		if ($line =~ /Loading/) {
