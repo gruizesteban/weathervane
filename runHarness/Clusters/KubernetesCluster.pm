@@ -55,12 +55,12 @@ override 'registerService' => sub {
 sub kubernetesSetContext {
 	my ( $self ) = @_;
 	my $logger         = get_logger("Weathervane::Clusters::KubernetesCluster");
-	my $contextName = $self->clusterName;
-	$logger->debug("kubernetesSetContext set context to $contextName");
-	my $cmd = "kubectl config use-context $contextName 2>&1";
-	my $outString = `$cmd`;
-	$logger->debug("Command: $cmd");
-	$logger->debug("Output: $outString");
+#	my $contextName = $self->clusterName;
+#	$logger->debug("kubernetesSetContext set context to $contextName");
+#	my $cmd = "kubectl config use-context $contextName 2>&1";
+#	my $outString = `$cmd`;
+#	$logger->debug("Command: $cmd");
+#	$logger->debug("Output: $outString");
 }
 
 sub kubernetesDeleteAll {
