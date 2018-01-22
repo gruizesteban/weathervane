@@ -49,20 +49,20 @@ sub clearDataBeforeStart {
 sub clearDataAfterStart {
 	my ( $self, $logPath ) = @_;
 	my $logger = get_logger("Weathervane::Services::PostgresqlService");
-	my $hostname    = $self->host->hostName;
+	my $cluster    = $self->host;
 	my $name        = $self->getParamValue('dockerName');
 
 	$logger->debug("clearDataAfterStart for $name");
 
 	my $time     = `date +%H:%M`;
 	chomp($time);
-	my $logName = "$logPath/ClearDataPostgresql-$hostname-$name-$time.log";
+	my $logName = "$logPath/ClearDataPostgresql-$name-$time.log";
 
 	my $applog;
 	open( $applog, ">$logName" ) or die "Error opening $logName:$!";
 	print $applog "Clearing Data From PortgreSQL\n";
 
-	$self->host->dockerExec($applog, $name, "/clearAfterStart.sh");
+	$cluster->kubernetesExecOne($self->getImpl(), "/clearAfterStart.sh", $self->namespace);
 
 	close $applog;
 
