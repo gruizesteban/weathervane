@@ -117,7 +117,7 @@ sub kubernetesExecOne {
 	$lines[0] =~ /^\s*([a-zA-Z0-9\-]+)/;
 	my $podName = $1;
 	
-	$cmd = "kubectl exec -c $serviceTypeImpl $podName $commandString --namespace=$namespace 2>&1";
+	$cmd = "kubectl exec -c $serviceTypeImpl --namespace=$namespace $podName -- $commandString 2>&1";
 	$outString = `$cmd`;
 	$logger->debug("Command: $cmd");
 	$logger->debug("Output: $outString");
@@ -152,7 +152,7 @@ sub kubernetesExecAll {
 		$line =~ /^\s*([a-zA-Z0-9\-]+)/;
 		my $podName = $1;
 	
-		$cmd = "kubectl exec -c $serviceTypeImpl $podName $commandString --namespace=$namespace 2>&1";
+		$cmd = "kubectl exec -c $serviceTypeImpl --namespace=$namespace $podName -- $commandString 2>&1";
 		$outString = `$cmd`;
 		$logger->debug("Command: $cmd");
 		$logger->debug("Output: $outString");
