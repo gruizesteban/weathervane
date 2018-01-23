@@ -1022,6 +1022,7 @@ sub waitForServicesRunning {
 	
 	sleep $initialDelaySeconds;
 	
+	my $impl   = $self->getParamValue('workloadImpl');
 	my $serviceTiersHashRef = $WeathervaneTypes::workloadToServiceTypes{$impl};
 	my $serviceTypesRef = $serviceTiersHashRef->{$serviceTier};
 	while ($retries >= 0) {
@@ -1053,6 +1054,7 @@ sub waitForServicesUp {
 	
 	sleep $initialDelaySeconds;
 	
+	my $impl   = $self->getParamValue('workloadImpl');
 	my $serviceTiersHashRef = $WeathervaneTypes::workloadToServiceTypes{$impl};
 	my $serviceTypesRef = $serviceTiersHashRef->{$serviceTier};
 	while ($retries >= 0) {
