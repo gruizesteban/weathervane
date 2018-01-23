@@ -191,15 +191,15 @@ sub kubernetesAreAllPodRunning {
 	}
 	
 	foreach my $line (@lines) { 
-		$line =~ /^\s*([a-zA-Z0-9\-]+)/;
-		my $podName = $1;
-	
-		$cmd = "kubectl exec -c $serviceTypeImpl --namespace=$namespace $podName -- $commandString 2>&1";
-		$outString = `$cmd`;
-		$logger->debug("Command: $cmd");
-		$logger->debug("Output: $outString");
+		$line =~ /^\s*[a-zA-Z0-9\-]+\s+\d+\/\d+\s+([a-zA-Z]+)\s+/;
+		my $status = $1;
+		if ($status ne "Running") {
+			$logger->debug("kubernetesAreAllPodRunning: Found a non-running pod: $line");
+			return 0;
+		}	
 	}
-	
+	$logger->debug("kubernetesAreAllPodRunning: All pods are running");
+	return 1;
 }
 
 __PACKAGE__->meta->make_immutable;

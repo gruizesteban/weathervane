@@ -116,6 +116,12 @@ override 'start' => sub {
 
 };
 
+override 'isRunning' => sub {
+	my ($self, $fileout) = @_;
+	my $serviceType = $self->getParamValue('serviceType');
+	my $namespace = $self->namespace;
+	return $self->host->kubernetesAreAllPodRunning("type=$serviceType", $namespace );
+}
 
 sub setPortNumbers {
 	my ($self)          = @_;
