@@ -764,10 +764,13 @@ sub cleanData {
 
 sub isRunningAndUpDataServices {
 	my ( $self, $logHandle ) = @_;
+	my $logger         = get_logger("Weathervane::DataManager::AuctionKubernetesDataManager");
+	my $console_logger = get_logger("Console");
 	
 	my $workloadNum    = $self->getParamValue('workloadNum');
 	my $appInstanceNum = $self->getParamValue('appInstanceNum');
-	
+	my $appInstance = $self->appInstance;
+		
 	# Make sure that all of the data services are running and up (ready for requests)
 	$logger->debug(
 		"Checking that all data services are running for appInstance $appInstanceNum of workload $workloadNum." );
