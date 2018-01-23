@@ -29,13 +29,20 @@ spec:
       name: auctiondatamanager
       labels:
         app: auction
-        tier: dm
+        tier: dataManager
         impl: auctiondatamanager
     spec:
       containers:
       - image: hrosenbe/weathervane-auctiondatamanager:1.1.0
         name: auctiondatamanager
         imagePullPolicy: IfNotPresent
+        livenessProbe:
+          exec:
+            command:
+            - cat
+            - /loadData.pl
+          initialDelaySeconds: 15
+          periodSeconds: 10
         envFrom:
         - configMapRef:
             name: auctiondatamanager-config

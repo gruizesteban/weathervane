@@ -21,7 +21,8 @@ spec:
       name: zookeeper
       labels:
         app: auction
-        tier: cs
+        tier: backend
+        type: coordinationServer
         impl: zookeeper
     spec:
       containers:
@@ -57,5 +58,6 @@ spec:
     name: electionport
   selector:
     app: auction
-    tier: cs
+    tier: backend
+    type: coordinationServer
     impl: zookeeper

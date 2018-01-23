@@ -17,7 +17,8 @@ spec:
       name: rabbitmq
       labels:
         app: auction
-        tier: msg
+        tier: backend
+        type: msgServer
         impl: rabbitmq
     spec:
       containers:
@@ -48,5 +49,6 @@ spec:
     name: peerport
   selector:
     app: auction
-    tier: msg
+    tier: backend
+    type: msgServer
     impl: rabbitmq

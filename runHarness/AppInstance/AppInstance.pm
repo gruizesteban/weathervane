@@ -1016,6 +1016,68 @@ sub stopServices {
 	}
 }
 
+# Running == the process is started, but the application may not be ready to accept requests
+sub waitForServicesRunning {
+	my ( $self, $serviceTier, $initialDelaySeconds, $retries, $periodSeconds, $logFile ) = @_;
+	
+	sleep $initialDelaySeconds;
+	
+	my $serviceTiersHashRef = $WeathervaneTypes::workloadToServiceTypes{$impl};
+	my $serviceTypesRef = $serviceTiersHashRef->{$serviceTier};
+	while ($retries >= 0) {
+		my $allIsRunning = 1;
+		foreach my $serviceType ( reverse @$serviceTypesRef ) {
+			my $servicesRef = $self->getActiveServicesByType($serviceType);
+			if ($#{$servicesRef} >= 0) {
+				# Use the first instance of the service for removing the 
+				# service instances
+				my $serviceRef = $servicesRef->[0];
+				$allIsRunning &= $serviceRef->isRunning($logFile);
+			} else {
+				next;
+			}
+		}
+		
+		if ($allIsRunning) {
+			return 1;
+		}
+		sleep $periodSeconds;
+		$retries--;
+	}
+	return 0;
+}
+
+# Up == the process is started and the application is ready to accept requests
+sub waitForServicesUp {
+	my ( $self, $serviceTier, $initialDelaySeconds, $retries, $periodSeconds, $logFile ) = @_;
+	
+	sleep $initialDelaySeconds;
+	
+	my $serviceTiersHashRef = $WeathervaneTypes::workloadToServiceTypes{$impl};
+	my $serviceTypesRef = $serviceTiersHashRef->{$serviceTier};
+	while ($retries >= 0) {
+		my $allIsUp = 1;
+		foreach my $serviceType ( reverse @$serviceTypesRef ) {
+			my $servicesRef = $self->getActiveServicesByType($serviceType);
+			if ($#{$servicesRef} >= 0) {
+				# Use the first instance of the service for removing the 
+				# service instances
+				my $serviceRef = $servicesRef->[0];
+				$allIsUp &= $serviceRef->isUp($logFile);
+			} else {
+				next;
+			}
+		}
+		
+		if ($allIsUp) {
+			return 1;
+		}
+		sleep $periodSeconds;
+		$retries--;
+	}
+	return 0;
+}
+
 sub removeServices {
 	my ( $self, $serviceTier, $setupLogDir ) = @_;
 	my $logger = get_logger("Weathervane::AppInstance::AppInstance");

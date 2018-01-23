@@ -27,7 +27,8 @@ spec:
       name: tomcat
       labels:
         app: auction
-        tier: app
+        tier: backend
+        type: appServer
         impl: tomcat
     spec:
       containers:
@@ -58,19 +59,6 @@ spec:
     name: httpsport
   selector:
     app: auction
-    tier: app
+    tier: backend
+    type: appServer
     impl: tomcat
----
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: tomcat
-spec:
-  rules:
-  - host: www.weathervane
-    http:
-      paths:
-      - path: /
-        backend:
-          serviceName: tomcat
-          servicePort: 8080

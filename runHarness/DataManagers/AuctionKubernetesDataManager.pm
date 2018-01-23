@@ -157,21 +157,10 @@ sub prepareData {
 		$appInstance->clearDataServicesBeforeStart($logPath);
 	}
 	$appInstance->startServices("data", $logPath);
-	# Make sure that the services know their external port numbers
-	$self->appInstance->setExternalPortNumbers();
-	sleep(10);
-
-	# Make sure that all of the data services are up
-	$logger->debug(
-		"Checking that all data services are up for appInstance $appInstanceNum of workload $workloadNum." );
-	my $allUp = $appInstance->isUpDataServices($logPath);
-	if ( !$allUp ) {
-		$console_logger->error(
-			"Couldn't bring up all data services for appInstance $appInstanceNum of workload $workloadNum." );
+	if ( !$self->isRunningAndUpDataServices($logHandle) ) {
 		return 0;
-	}
-	$logger->debug( "All data services are up for appInstance $appInstanceNum of workload $workloadNum." );
-
+	}	
+	
 	$self->startAuctionKubernetesDataManagerContainer ($users, $logHandle);
 		
 	my $loadedData = 0;
@@ -202,12 +191,9 @@ sub prepareData {
 					  . "$appInstanceNum of workload $workloadNum.  Checking if they are up." );
 
 				# Make sure that all of the data services are up
-				my $allUp = $appInstance->isUpDataServices($logPath);
-				if ( !$allUp ) {
-					$console_logger->error( "Couldn't bring up all data services for appInstance "
-						  . "$appInstanceNum of workload $workloadNum." );
+				if ( !$self->isRunningAndUpDataServices($logHandle) ) {
 					return 0;
-				}
+				}	
 
 				$logger->debug( "Clear data services after start for appInstance "
 					  . "$appInstanceNum of workload $workloadNum.  Checking if they are up." );
@@ -774,6 +760,33 @@ sub cleanData {
 			print $logHandle $cmdout;
 
 	}
+}
+
+sub isRunningAndUpDataServices {
+	my ( $self, $logHandle ) = @_;
+	
+	my $workloadNum    = $self->getParamValue('workloadNum');
+	my $appInstanceNum = $self->getParamValue('appInstanceNum');
+	
+	# Make sure that all of the data services are running and up (ready for requests)
+	$logger->debug(
+		"Checking that all data services are running for appInstance $appInstanceNum of workload $workloadNum." );
+	my $allIsRunning = $appInstance->waitForServicesRunning("data", 15, 3, 15, $logHandle);
+	if ( !$allIsRunning ) {
+		$console_logger->error(
+			"Couldn't bring to running all data services for appInstance $appInstanceNum of workload $workloadNum." );
+		return 0;
+	}
+	$logger->debug(
+		"Checking that all data services are up for appInstance $appInstanceNum of workload $workloadNum." );
+	my $allIsUp = $appInstance->waitForServicesUp("data", 0, 4, 15, $logHandle);
+	if ( !$allIsUp ) {
+		$console_logger->error(
+			"Couldn't bring up all data services for appInstance $appInstanceNum of workload $workloadNum." );
+		return 0;
+	}
+	$logger->debug( "All data services are up for appInstance $appInstanceNum of workload $workloadNum." );
+	return 1;
 }
 
 __PACKAGE__->meta->make_immutable;

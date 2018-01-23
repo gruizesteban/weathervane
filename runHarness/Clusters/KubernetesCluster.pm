@@ -172,6 +172,36 @@ sub kubernetesApply {
 	$logger->debug("Output: $outString");
 }
 
+sub kubernetesAreAllPodRunning {
+	my ( $self, $podLabelString, $namespace ) = @_;
+	my $logger         = get_logger("Weathervane::Clusters::KubernetesCluster");
+	$logger->debug("kubernetesAreAllPodRunning podLabelString $podLabelString, namespace $namespace");
+	$self->kubernetesSetContext();
+	my $cmd;
+	my $outString;
+	$cmd = "kubectl get pod --selector=$podLabelString --no-headers --namespace=$namespace 2>&1";
+	$outString = `$cmd`;
+	$logger->debug("Command: $cmd");
+	$logger->debug("Output: $outString");
+
+	my @lines = split /\n/, $outString;
+	if ($#lines < 0) {
+		$logger->debug("kubernetesAreAllPodRunning: There are no pods with label $podLabelString in namespace $namespace");
+		return 0;
+	}
+	
+	foreach my $line (@lines) { 
+		$line =~ /^\s*([a-zA-Z0-9\-]+)/;
+		my $podName = $1;
+	
+		$cmd = "kubectl exec -c $serviceTypeImpl --namespace=$namespace $podName -- $commandString 2>&1";
+		$outString = `$cmd`;
+		$logger->debug("Command: $cmd");
+		$logger->debug("Output: $outString");
+	}
+	
+}
+
 __PACKAGE__->meta->make_immutable;
 
 1;

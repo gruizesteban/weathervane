@@ -23,7 +23,8 @@ spec:
       name: mongodb
       labels:
         app: auction
-        tier: nosql
+        tier: data
+        type: nosqlServer
         impl: mongodb
     spec:
       containers:
@@ -62,5 +63,6 @@ spec:
     targetPort: mongodport
   selector:
     app: auction
-    tier: nosql
+    tier: data
+    type: nosqlServer
     impl: mongodb

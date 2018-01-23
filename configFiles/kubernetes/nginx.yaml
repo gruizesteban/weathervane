@@ -23,7 +23,8 @@ spec:
       name: nginx
       labels:
         app: auction
-        tier: web
+        tier: backend
+        type: webServer
         impl: nginx
     spec:
       containers:
@@ -54,19 +55,6 @@ spec:
     name: httpsport
   selector:
     app: auction
-    tier: app
+    tier: backend
+    type: webServer
     impl: nginx
----
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: nginx
-spec:
-  rules:
-  - host: www.weathervane
-    http:
-      paths:
-      - path: /
-        backend:
-          serviceName: nginx
-          servicePort: 80
