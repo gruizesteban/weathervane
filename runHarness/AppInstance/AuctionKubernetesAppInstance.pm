@@ -50,7 +50,10 @@ override 'initialize' => sub {
 	my ($self) = @_;
 	
 	$self->namespace("auctionw" . $self->getParamValue('workloadNum') . "i" . $self->getParamValue('appInstanceNum'));
-	
+
+	if ($self->getParamValue('redeploy')) {
+	    $self->imagePullPolicy('Always');
+	}
 	
 	super();
 
@@ -231,7 +234,7 @@ override 'getServiceConfigParameters' => sub {
 
 override 'redeploy' => sub {
 	my ( $self, $logfile ) = @_;
-	my $logger = get_logger("Weathervane::AppInstance::AuctionAppInstance");
+	my $logger = get_logger("Weathervane::AppInstance::AuctionKubernetesAppInstance");
 	$logger->debug(
 		"redeploy for workload ", $self->getParamValue('workloadNum'),
 		", appInstance ",         $self->getParamValue('appInstanceNum')
