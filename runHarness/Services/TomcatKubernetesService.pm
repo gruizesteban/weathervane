@@ -106,7 +106,7 @@ sub configure {
 			print FILEOUT "  TOMCAT_JDBC_MAXIDLE: \"$maxIdle\"\n";
 		}
 		elsif ( $inline =~ /TOMCAT_CONNECTIONS:/ ) {
-			print FILEOUT "  TOMCAT_CONNECTIONS: $maxConnections\n";
+			print FILEOUT "  TOMCAT_CONNECTIONS: \"$maxConnections\"\n";
 		}
 		else {
 			print FILEOUT $inline;
