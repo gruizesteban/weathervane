@@ -122,8 +122,8 @@ sub stopAuctionKubernetesDataManagerContainer {
 	my $logger         = get_logger("Weathervane::DataManager::AuctionKubernetesDataManager");
 	my $cluster = $self->host;
 	
-	$cluster->kubernetesDelete("configMap", "auctionDataManager-config", $self->appInstance->namespace);
-	$cluster->kubernetesDelete("deployment", "auctionDataManager", $self->appInstance->namespace);
+	$cluster->kubernetesDelete("configMap", "auctiondatamanager-config", $self->appInstance->namespace);
+	$cluster->kubernetesDelete("deployment", "auctiondatamanager", $self->appInstance->namespace);
 
 }
 
