@@ -114,6 +114,21 @@ sub startAuctionKubernetesDataManagerContainer {
 
 	my $cluster = $self->host;
 	$cluster->kubernetesApply("/tmp/auctionDataManager-${namespace}.yaml", $namespace);
+
+	sleep 15;
+	my $retries = 3;
+	while ($retries >= 0) {
+		my $isRunning = $cluster->kubernetesAreAllPodRunning("tier=dataManager", $namespace );
+		
+		if ($isRunning) {
+			return 1;
+		}
+		sleep 15;
+		$retries--;
+	}
+	return 0;
+	
+	
 	
 }
 
