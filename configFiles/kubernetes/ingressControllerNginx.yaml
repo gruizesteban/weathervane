@@ -4,6 +4,8 @@ metadata:
   name: ingress-controller-nginx-conf
   labels:
     app: ingress-controller-nginx
+data:
+  ssl-redirect: "false"
 ---
 kind: ConfigMap
 apiVersion: v1
@@ -18,7 +20,7 @@ metadata:
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: nginx-ingress-controller
+  name: ingress-controller-nginx
 spec:
   replicas: 1
   selector:

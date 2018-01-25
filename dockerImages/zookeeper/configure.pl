@@ -32,7 +32,7 @@ while ( my $inline = <FILEIN> ) {
 
 }
 
-if ( $#servers > 1 ) {
+if ( $#servers > 0 ) {
 
 	# Add server info for a replicated config
 	print FILEOUT "initLimit=5\n";

@@ -150,7 +150,7 @@ override 'getServiceConfigParameters' => sub {
 			my $app1Hostname  = $appServersRef->[0]->getIpAddr();
 			$jvmOpts .= " -DIGNITEAPP1HOSTNAME=$app1Hostname ";
 		}
-		my $zookeeperConnectionString = "zookeeper-0:2181,zookeeper-1:2181,zookeeper-2:2181";
+		my $zookeeperConnectionString = "zookeeper-0.zookeeper:2181,zookeeper-1.zookeeper:2181,zookeeper-2.zookeeper:2181";
 		$jvmOpts .= " -DZOOKEEPERCONNECTIONSTRING=$zookeeperConnectionString ";
 
 		if ( $numWebServers > 1 ) {
