@@ -82,7 +82,17 @@ sub setHost {
 	close FILEIN;
 	close FILEOUT;
 	$host->kubernetesApply("/tmp/namespace-$namespace.yaml", $self->namespace);
+	
+	# Create the ingress controller in the namespace
+	
+	# Create the service for the ingress controller
 		
+}
+
+sub cleanup {
+	my ( $self, $cleanupLogDir ) = @_;
+	my $logger = get_logger("Weathervane::AppInstance::AppInstance");
+
 }
 
 override 'getServiceConfigParameters' => sub {

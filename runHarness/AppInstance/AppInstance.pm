@@ -1662,6 +1662,12 @@ sub sanityCheckServices {
 	return $passed;
 }
 
+sub cleanup {
+	my ( $self, $cleanupLogDir ) = @_;
+	my $logger = get_logger("Weathervane::AppInstance::AppInstance");
+
+}
+
 sub cleanData {
 	my ( $self, $setupLogDir ) = @_;
 	my $logger = get_logger("Weathervane::AppInstance::AppInstance");
