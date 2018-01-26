@@ -500,7 +500,7 @@ sub getWwwIpAddrsRef {
 	my $wwwIpAddrsRef = [];
 	if ( $self->getParamValue('useVirtualIp') ) {
 		$logger->debug("configure for workload $workloadNum, appInstance uses virtualIp");
-		my $wwwHostname = $appInstance->getWwwHostname();
+		my $wwwHostname = $self->getWwwHostname();
 		my $wwwIpsRef = Utils::getIpAddresses($wwwHostname);
 		foreach my $ip (@$wwwIpsRef) {
 			# When using virtualIP addresses, all edge services must use the same
