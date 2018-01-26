@@ -529,6 +529,7 @@ sub createRunConfigHash {
 	$intervalSpec->{"period"}                     = $self->getParamValue('statsInterval');
 	$runRef->{"statsIntervalSpecs"}->{"periodic"} = $intervalSpec;
 
+	$logger->debug("createRunConfigHas completed");
 	return $runRef;
 }
 
