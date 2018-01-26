@@ -577,19 +577,18 @@ sub loadData {
 	# Get the list of pods
 	my $cmd;
 	my $outString;	
-	$cmd = "kubectl get pod --selector=impl=auctiondatamanager --no-headers --namespace=$namespace 2>&1";
+	$cmd = "kubectl get pod -o=jsonpath='{.items[*].metadata.name}' --selector=impl=auctiondatamanager --namespace=$namespace 2>&1";
 	$outString = `$cmd`;
 	$logger->debug("Command: $cmd");
 	$logger->debug("Output: $outString");
-	my @lines = split /\n/, $outString;
+	my @lines = split /\s+/, $outString;
 	if ($#lines < 0) {
 		$console_logger->error("loadData: There are no pods with label auctiondatamanager in namespace $namespace");
 		exit(-1);
 	}
 	
 	# Get the name of the first pod
-	$lines[0] =~ /^\s*([a-zA-Z0-9\-]+)/;
-	my $podName = $1;
+	my $podName = $lines[0];
 
 	open my $pipe, "kubectl exec -c auctiondatamanager $podName perl /loadData.pl  |"   or die "Couldn't execute program: $!";
  	while ( defined( my $line = <$pipe> )  ) {

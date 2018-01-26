@@ -112,15 +112,16 @@ sub cleanup {
 
 override 'getWwwIpAddrsRef' => sub {
 	my ($self) = @_;
+	my $cluster = $self->host;
+	
 	my $wwwIpAddrsRef = [];
 	
 	# Get the IP address of the nginx-ingress in this appInstance's namespace
-	my $ipAddr;
-	
+	my $ipAddr = $host->kubernetesGetIngressIp("type=appInstance", $self->namespace);
 	
 	# Get the nodePort numbers for the ingress-controller-nginx service
-	my $httpPort;
-	my $httpsPort;
+	my $httpPort = $host->kubernetesGetNodePortForPortNumber("type=appInstance", 80, $self->namespace);
+	my $httpsPort = $host->kubernetesGetNodePortForPortNumber("type=appInstance", 443, $self->namespace);
 	
 	push @$wwwIpAddrsRef, [$ipAddr, $httpPort, $httpsPort];					
 	return $wwwIpAddrsRef;
