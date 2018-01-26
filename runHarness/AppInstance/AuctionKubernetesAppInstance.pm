@@ -61,6 +61,7 @@ override 'initialize' => sub {
 
 sub setHost {
 	my ($self, $host) = @_;
+	my $logger = get_logger("Weathervane::AppInstance::AuctionKubernetesAppInstance");
 	
 	$self->host($host);
 
@@ -103,7 +104,7 @@ sub setHost {
 
 sub cleanup {
 	my ( $self, $cleanupLogDir ) = @_;
-	my $logger = get_logger("Weathervane::AppInstance::AppInstance");
+	my $logger = get_logger("Weathervane::AppInstance::AuctionKubernetesAppInstance");
 	
 	my $cluster = $self->host;
 	$cluster->kubernetesDeleteAllWithLabel("type=appInstance", $self->namespace);
@@ -117,11 +118,11 @@ override 'getWwwIpAddrsRef' => sub {
 	my $wwwIpAddrsRef = [];
 	
 	# Get the IP address of the nginx-ingress in this appInstance's namespace
-	my $ipAddr = $host->kubernetesGetIngressIp("type=appInstance", $self->namespace);
+	my $ipAddr = $cluster->kubernetesGetIngressIp("type=appInstance", $self->namespace);
 	
 	# Get the nodePort numbers for the ingress-controller-nginx service
-	my $httpPort = $host->kubernetesGetNodePortForPortNumber("type=appInstance", 80, $self->namespace);
-	my $httpsPort = $host->kubernetesGetNodePortForPortNumber("type=appInstance", 443, $self->namespace);
+	my $httpPort = $cluster->kubernetesGetNodePortForPortNumber("type=appInstance", 80, $self->namespace);
+	my $httpsPort = $cluster->kubernetesGetNodePortForPortNumber("type=appInstance", 443, $self->namespace);
 	
 	push @$wwwIpAddrsRef, [$ipAddr, $httpPort, $httpsPort];					
 	return $wwwIpAddrsRef;
