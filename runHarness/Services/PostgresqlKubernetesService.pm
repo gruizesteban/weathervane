@@ -214,10 +214,10 @@ sub getStatsSummary {
 sub getMaxLoadedUsers {
 	my ($self) = @_;
 	
-	my $hostname = $self->getIpAddr();
-	my $impl = $self->getImpl() ;
-	my $port             = $self->portMap->{$impl};
-	my $maxUsers = `psql --host $hostname --port $port -U auction  -t -q --command="select maxusers from dbbenchmarkinfo;"`;
+	my $cluster = $self->host;
+	my $serviceType = $self->getParamValue('serviceType');
+	my $maxUser = $cluster->kubernetesExecOne($serviceType, "psql -U auction  -t -q --command=\"select maxusers from dbbenchmarkinfo;\"", $self->namespace);
+	chomp($maxUsers);
 	$maxUsers += 0;
 	
 	return $maxUsers;
