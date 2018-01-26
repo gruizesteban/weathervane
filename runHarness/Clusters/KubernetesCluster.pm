@@ -230,7 +230,7 @@ sub kubernetesGetNodePortForPortNumber {
 
 	my @ports = split /\s+/, $portLists[0];
 	my @nodePorts = split /\s+/, $portLists[1];
-	if ($#ports <> $#nodePorts) {
+	if ($#ports != $#nodePorts) {
 		$logger->error("kubernetesGetNodePortForPortNumber: There are not nodePorts for every port on the services with label $labelString in namespace $namespace");
 		return "";
 	}
