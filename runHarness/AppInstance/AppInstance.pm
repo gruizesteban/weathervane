@@ -494,6 +494,9 @@ sub getWwwHostname {
 
 sub getWwwIpAddrsRef {
 	my ($self) = @_;
+	my $logger         = get_logger("Weathervane::AppInstance::AppInstance");
+	my $workloadNum    = $self->getParamValue('workloadNum');
+
 	my $wwwIpAddrsRef = [];
 	if ( $self->getParamValue('useVirtualIp') ) {
 		$logger->debug("configure for workload $workloadNum, appInstance uses virtualIp");
