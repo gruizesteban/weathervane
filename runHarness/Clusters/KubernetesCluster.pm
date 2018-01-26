@@ -80,11 +80,29 @@ sub kubernetesDeleteAll {
 sub kubernetesDeleteAllWithLabel {
 	my ( $self, $selector, $namespace ) = @_;
 	my $logger         = get_logger("Weathervane::Clusters::KubernetesCluster");
-	$logger->debug("kubernetesDelete deleteAllWithLabel with label $selector in namespace $namespace");
+	$logger->debug("kubernetesDeleteAllWithLabel with label $selector in namespace $namespace");
 	$self->kubernetesSetContext();
 	my $cmd;
 	my $outString;
 	$cmd = "kubectl delete all --all --selector=$selector --namespace=$namespace 2>&1";
+	$outString = `$cmd`;
+	$logger->debug("Command: $cmd");
+	$logger->debug("Output: $outString");
+	$cmd = "kubectl delete configmap --all --selector=$selector --namespace=$namespace 2>&1";
+	$outString = `$cmd`;
+	$logger->debug("Command: $cmd");
+	$logger->debug("Output: $outString");
+	
+}
+
+sub kubernetesDeleteAllWithLabelAndResourceType {
+	my ( $self, $selector, $resourceType, $namespace ) = @_;
+	my $logger         = get_logger("Weathervane::Clusters::KubernetesCluster");
+	$logger->debug("kubernetesDeleteAllWithLabelAndResourceType with resourceType $resourceType, label $selector in namespace $namespace");
+	$self->kubernetesSetContext();
+	my $cmd;
+	my $outString;
+	$cmd = "kubectl delete $resourceType --all --selector=$selector --namespace=$namespace 2>&1";
 	$outString = `$cmd`;
 	$logger->debug("Command: $cmd");
 	$logger->debug("Output: $outString");

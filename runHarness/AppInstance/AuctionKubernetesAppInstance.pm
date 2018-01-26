@@ -111,6 +111,7 @@ sub cleanup {
 	
 	my $cluster = $self->host;
 	$cluster->kubernetesDeleteAllWithLabel("type=appInstance", $self->namespace);
+	$cluster->kubernetesDeleteAllWithLabelAndResourceType("type=appInstance", "ingress", $self->namespace);
 
 }
 
