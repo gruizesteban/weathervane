@@ -77,11 +77,7 @@ override 'stop' => sub {
 		
 	my $cluster = $self->host;
 	
-	$cluster->kubernetesDelete("configMap", "$impl-config", $self->namespace);
-	$cluster->kubernetesDelete("deployment", "$impl", $self->namespace);
-	$cluster->kubernetesDelete("statefulset", "$impl", $self->namespace);
-	$cluster->kubernetesDelete("service", "$impl", $self->namespace);
-	$cluster->kubernetesDelete("ingress", "$impl", $self->namespace);
+	$cluster->kubernetesDeleteAllWithLabel("type=$serviceType", $self->namespace);
 		
 	close $log;
 };

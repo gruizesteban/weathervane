@@ -83,17 +83,48 @@ sub setHost {
 	close FILEOUT;
 	$host->kubernetesApply("/tmp/namespace-$namespace.yaml", $self->namespace);
 	
+	# Create the tls secret for the ingress controller
+	$logger->debug("Create tls secret for namespace ", $self->namespace);
+	my $cmd = "kubectl create secret tls tls-secret --key $configDir/host/centos7/tls/private/weathervane.key --cert $configDir/host/centos7/tls/private/weathervane.crt --namespace=$namespace 2>&1"; 
+	my $outString = `$cmd`;
+	$logger->debug("Command: $cmd");
+	$logger->debug("Output: $outString");
+	
 	# Create the ingress controller in the namespace
+	$host->kubernetesApply("$configDir/kubernetes/ingressControllerNginx.yaml", $self->namespace);
 	
 	# Create the service for the ingress controller
+	$host->kubernetesApply("$configDir/kubernetes/ingressControllerNginxService.yaml", $self->namespace);
+	
+	# Create the ingress for the appInstance
+	$host->kubernetesApply("$configDir/kubernetes/auctionIngress.yaml", $self->namespace);
 		
 }
 
 sub cleanup {
 	my ( $self, $cleanupLogDir ) = @_;
 	my $logger = get_logger("Weathervane::AppInstance::AppInstance");
+	
+	my $cluster = $self->host;
+	$cluster->kubernetesDeleteAllWithLabel("type=appInstance", $self->namespace);
 
 }
+
+override 'getWwwIpAddrsRef' => sub {
+	my ($self) = @_;
+	my $wwwIpAddrsRef = [];
+	
+	# Get the IP address of the nginx-ingress in this appInstance's namespace
+	my $ipAddr;
+	
+	
+	# Get the nodePort numbers for the ingress-controller-nginx service
+	my $httpPort;
+	my $httpsPort;
+	
+	push @$wwwIpAddrsRef, [$ipAddr, $httpPort, $httpsPort];					
+	return $wwwIpAddrsRef;
+};
 
 override 'getServiceConfigParameters' => sub {
 	my ( $self, $service, $serviceType ) = @_;

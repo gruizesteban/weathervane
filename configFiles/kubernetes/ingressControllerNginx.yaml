@@ -4,6 +4,7 @@ metadata:
   name: ingress-controller-nginx-conf
   labels:
     app: ingress-controller-nginx
+    type: appInstance
 data:
   ssl-redirect: "false"
 ---
@@ -11,16 +12,22 @@ kind: ConfigMap
 apiVersion: v1
 metadata:
   name: ingress-controller-nginx-tcp-services
+  labels:
+    type: appInstance
 ---
 kind: ConfigMap
 apiVersion: v1
 metadata:
   name: ingress-controller-nginx-udp-services
+  labels:
+    type: appInstance
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: ingress-controller-nginx
+  labels:
+    type: appInstance
 spec:
   replicas: 1
   selector:
@@ -30,6 +37,7 @@ spec:
     metadata:
       labels:
         app: ingress-controller-nginx
+        type: appInstance
       annotations:
         prometheus.io/port: '10254'
         prometheus.io/scrape: 'true' 

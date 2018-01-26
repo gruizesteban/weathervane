@@ -492,6 +492,33 @@ sub getWwwHostname {
 	return $self->getParamValue('wwwHostname');
 }
 
+sub getWwwIpAddrsRef {
+	my ($self) = @_;
+	my $wwwIpAddrsRef = [];
+	if ( $self->getParamValue('useVirtualIp') ) {
+		$logger->debug("configure for workload $workloadNum, appInstance uses virtualIp");
+		my $wwwHostname = $appInstance->getWwwHostname();
+		my $wwwIpsRef = Utils::getIpAddresses($wwwHostname);
+		foreach my $ip (@$wwwIpsRef) {
+			# When using virtualIP addresses, all edge services must use the same
+			# default port numbers
+			push @$wwwIpAddrsRef, [$ip, 80, 443];				
+		}
+	}
+	else {
+		my $edgeService  = $self->getEdgeService();
+		my $edgeServices = $self->getActiveServicesByType($edgeService);
+		$logger->debug(
+			"configure for workload $workloadNum, appInstance does not use virtualIp. edgeService is $edgeService"
+		);
+		foreach my $service (@$edgeServices) {
+			push @$wwwIpAddrsRef, [$service->getIpAddr(), $service->portMap->{"http"}, $service->portMap->{"https"}];
+		}
+	}
+	
+	return $wwwIpAddrsRef;
+}
+
 sub clearReloadDb {
 	my ($self) = @_;
 	$self->dataManager->setParamValue( 'reloadDb', 0 );;

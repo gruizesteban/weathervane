@@ -77,6 +77,20 @@ sub kubernetesDeleteAll {
 	
 }
 
+sub kubernetesDeleteAllWithLabel {
+	my ( $self, $selector, $namespace ) = @_;
+	my $logger         = get_logger("Weathervane::Clusters::KubernetesCluster");
+	$logger->debug("kubernetesDelete deleteAllWithLabel of type $resourceType in namespace $namespace");
+	$self->kubernetesSetContext();
+	my $cmd;
+	my $outString;
+	$cmd = "kubectl delete all --all --selector=$selector --namespace=$namespace 2>&1";
+	$outString = `$cmd`;
+	$logger->debug("Command: $cmd");
+	$logger->debug("Output: $outString");
+	
+}
+
 sub kubernetesDelete {
 	my ( $self, $resourceType, $resourceName, $namespace ) = @_;
 	my $logger         = get_logger("Weathervane::Clusters::KubernetesCluster");
