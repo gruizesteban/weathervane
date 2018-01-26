@@ -228,7 +228,7 @@ sub kubernetesGetNodePortForPortNumber {
 	$self->kubernetesSetContext();
 	my $cmd;
 	my $outString;
-	$cmd = "kubectl get service --selector=$labelString -o=jsonpath='{range .items[*]}{.spec.ports[*].port}{\",\"}{.spec.ports[*].nodePort}{\"\n\"}{end}' --namespace=$namespace 2>&1";
+	$cmd = "kubectl get service --selector=$labelString -o=jsonpath='{range .items[*]}{.spec.ports[*].port}{\",\"}{.spec.ports[*].nodePort}{\"\\n\"}{end}' --namespace=$namespace 2>&1";
 	$outString = `$cmd`;
 	$logger->debug("Command: $cmd");
 	$logger->debug("Output: $outString");
