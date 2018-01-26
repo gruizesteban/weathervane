@@ -262,7 +262,7 @@ sub kubernetesAreAllPodRunning {
 
 	my @stati = split /\n/, $outString;
 	if ($#stati < 0) {
-		$logger->error("kubernetesAreAllPodRunning: There are no pods with label $podLabelString in namespace $namespace");
+		$logger->debug("kubernetesAreAllPodRunning: There are no pods with label $podLabelString in namespace $namespace");
 		return 0;
 	}
 	

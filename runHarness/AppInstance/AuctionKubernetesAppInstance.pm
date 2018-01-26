@@ -91,6 +91,9 @@ sub setHost {
 	$logger->debug("Command: $cmd");
 	$logger->debug("Output: $outString");
 	
+	# Create the default backend in the namespace
+	$host->kubernetesApply("$configDir/kubernetes/defaultBackend.yaml", $self->namespace);
+	
 	# Create the ingress controller in the namespace
 	$host->kubernetesApply("$configDir/kubernetes/ingressControllerNginx.yaml", $self->namespace);
 	
