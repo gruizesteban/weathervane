@@ -144,7 +144,7 @@ sub run {
 	callMethodOnObjectsParamListParallel1( "stopServices", [$self], \@tiers, $setupLogDir );
 
 	# Let the appInstances clean any run specific data or services
-	$self->cleanupAppInstances($cleanupLogDir);
+	$self->cleanupAppInstances($setupLogDir);
 
 	$debug_logger->debug("Unregister port numbers");
 	$self->unRegisterPortNumbers();
