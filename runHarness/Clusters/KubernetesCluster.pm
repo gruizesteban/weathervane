@@ -268,7 +268,7 @@ sub kubernetesAreAllPodRunning {
 	
 	foreach my $status (@stati) { 
 		if ($status ne "Running") {
-			$logger->debug("kubernetesAreAllPodRunning: Found a non-running pod: $line");
+			$logger->debug("kubernetesAreAllPodRunning: Found a non-running pod: $status");
 			return 0;
 		}	
 	}
