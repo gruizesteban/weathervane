@@ -80,7 +80,7 @@ sub kubernetesDeleteAll {
 sub kubernetesDeleteAllWithLabel {
 	my ( $self, $selector, $namespace ) = @_;
 	my $logger         = get_logger("Weathervane::Clusters::KubernetesCluster");
-	$logger->debug("kubernetesDelete deleteAllWithLabel of type $resourceType in namespace $namespace");
+	$logger->debug("kubernetesDelete deleteAllWithLabel with label $selector in namespace $namespace");
 	$self->kubernetesSetContext();
 	my $cmd;
 	my $outString;
@@ -210,7 +210,7 @@ sub kubernetesGetNodePortForPortNumber {
 	$self->kubernetesSetContext();
 	my $cmd;
 	my $outString;
-	$cmd = "kubectl get service --selector=$labelString -o=jsonpath='{range .items[*]}{.spec.ports[*].port}{","}{.spec.ports[*].nodePort}{"\n"}{end}' --namespace=$namespace 2>&1";
+	$cmd = "kubectl get service --selector=$labelString -o=jsonpath='{range .items[*]}{.spec.ports[*].port}{\",\"}{.spec.ports[*].nodePort}{\"\n\"}{end}' --namespace=$namespace 2>&1";
 	$outString = `$cmd`;
 	$logger->debug("Command: $cmd");
 	$logger->debug("Output: $outString");
