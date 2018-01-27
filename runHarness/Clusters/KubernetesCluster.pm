@@ -84,11 +84,11 @@ sub kubernetesDeleteAllWithLabel {
 	$self->kubernetesSetContext();
 	my $cmd;
 	my $outString;
-	$cmd = "kubectl delete all --all --selector=$selector --namespace=$namespace 2>&1";
+	$cmd = "kubectl delete all --selector=$selector --namespace=$namespace 2>&1";
 	$outString = `$cmd`;
 	$logger->debug("Command: $cmd");
 	$logger->debug("Output: $outString");
-	$cmd = "kubectl delete configmap --all --selector=$selector --namespace=$namespace 2>&1";
+	$cmd = "kubectl delete configmap --selector=$selector --namespace=$namespace 2>&1";
 	$outString = `$cmd`;
 	$logger->debug("Command: $cmd");
 	$logger->debug("Output: $outString");
@@ -102,7 +102,7 @@ sub kubernetesDeleteAllWithLabelAndResourceType {
 	$self->kubernetesSetContext();
 	my $cmd;
 	my $outString;
-	$cmd = "kubectl delete $resourceType --all --selector=$selector --namespace=$namespace 2>&1";
+	$cmd = "kubectl delete $resourceType --selector=$selector --namespace=$namespace 2>&1";
 	$outString = `$cmd`;
 	$logger->debug("Command: $cmd");
 	$logger->debug("Output: $outString");
