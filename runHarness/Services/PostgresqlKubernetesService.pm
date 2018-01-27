@@ -215,8 +215,8 @@ sub getMaxLoadedUsers {
 	my ($self) = @_;
 	
 	my $cluster = $self->host;
-	my $serviceType = $self->getParamValue('serviceType');
-	my $maxUsers = $cluster->kubernetesExecOne($serviceType, "psql -U auction  -t -q --command=\"select maxusers from dbbenchmarkinfo;\"", $self->namespace);
+	my $impl = $self->getImpl();
+	my $maxUsers = $cluster->kubernetesExecOne($impl, "psql -U auction  -t -q --command=\"select maxusers from dbbenchmarkinfo;\"", $self->namespace);
 	chomp($maxUsers);
 	$maxUsers += 0;
 	
