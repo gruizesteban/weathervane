@@ -164,8 +164,8 @@ override 'cleanup' => sub {
 	my $logger = get_logger("Weathervane::AppInstance::AuctionKubernetesAppInstance");
 	
 	my $cluster = $self->host;
-	$cluster->kubernetesDeleteAllWithLabel("app=ingress-controller-nginx", $self->namespace);
-	$cluster->kubernetesDeleteAllWithLabelAndResourceType("app=ingress-controller-nginx", "ingress", $self->namespace);
+	$cluster->kubernetesDeleteAllWithLabel("type=appInstance", $self->namespace);
+	$cluster->kubernetesDeleteAllWithLabelAndResourceType("type=appInstance", "ingress", $self->namespace);
 #	$cluster->kubernetesDelete("ns", $self->namespace, $self->namespace ) ;
 
 };
@@ -180,8 +180,8 @@ override 'getWwwIpAddrsRef' => sub {
 	my $ipAddr = $cluster->kubernetesGetIngressIp("type=appInstance", $self->namespace);
 	
 	# Get the nodePort numbers for the ingress-controller-nginx service
-	my $httpPort = $cluster->kubernetesGetNodePortForPortNumber("type=appInstance", 80, $self->namespace);
-	my $httpsPort = $cluster->kubernetesGetNodePortForPortNumber("type=appInstance", 443, $self->namespace);
+	my $httpPort = $cluster->kubernetesGetNodePortForPortNumber("app=ingress-controller-nginx", 80, $self->namespace);
+	my $httpsPort = $cluster->kubernetesGetNodePortForPortNumber("app=ingress-controller-nginx", 443, $self->namespace);
 	
 	push @$wwwIpAddrsRef, [$ipAddr, $httpPort, $httpsPort];					
 	return $wwwIpAddrsRef;
