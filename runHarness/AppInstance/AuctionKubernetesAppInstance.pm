@@ -156,6 +156,8 @@ override 'startServices' => sub {
 		} else {
 			next;
 		}
+		
+		sleep 30;
 	}
 };
 
