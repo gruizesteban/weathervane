@@ -81,7 +81,12 @@ sub configure {
 	
 	while ( my $inline = <FILEIN> ) {
 
-		print FILEOUT $inline;
+		if ( $inline =~ /(\s+)imagePullPolicy/ ) {
+			print FILEOUT "${1}imagePullPolicy: " . $self->appInstance->imagePullPolicy . "\n";
+		}
+		else {
+			print FILEOUT $inline;
+		}
 
 	}
 	
