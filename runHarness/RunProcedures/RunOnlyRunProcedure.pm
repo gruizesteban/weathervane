@@ -161,19 +161,19 @@ override 'run' => sub {
 	## get the logs
 	$self->getLogFiles();
 
-	my $sanityPassed = $self->sanityCheckServices($cleanupLogDir);
-	if ($sanityPassed) {
-		$console_logger->info("All Sanity Checks Passed");
-	}
-	else {
-		$console_logger->info("Sanity Checks Failed");
-	}
-
 	if ( $self->getParamValue('stopServices') ) {
 
 		## stop the services
 		my @tiers = qw(frontend backend data infrastructure);
 		callMethodOnObjectsParamListParallel1( "stopServices", [$self], \@tiers, $cleanupLogDir );
+
+		my $sanityPassed = $self->sanityCheckServices($cleanupLogDir);
+		if ($sanityPassed) {
+			$console_logger->info("All Sanity Checks Passed");
+		}
+		else {
+			$console_logger->info("Sanity Checks Failed");
+		}
 
 		$debug_logger->debug("Unregister port numbers");
 		$self->unRegisterPortNumbers();
