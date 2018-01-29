@@ -4,6 +4,7 @@ metadata:
   name: ingress-controller-nginx
   labels:
     type: appInstance
+    app: ingress-controller-nginx
 spec:
   type: NodePort
   ports:

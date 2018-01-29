@@ -164,8 +164,8 @@ override 'cleanup' => sub {
 	my $logger = get_logger("Weathervane::AppInstance::AuctionKubernetesAppInstance");
 	
 	my $cluster = $self->host;
-	$cluster->kubernetesDeleteAllWithLabel("type=appInstance", $self->namespace);
-	$cluster->kubernetesDeleteAllWithLabelAndResourceType("type=appInstance", "ingress", $self->namespace);
+	$cluster->kubernetesDeleteAllWithLabel("app=ingress-controller-nginx", $self->namespace);
+	$cluster->kubernetesDeleteAllWithLabelAndResourceType("app=ingress-controller-nginx", "ingress", $self->namespace);
 #	$cluster->kubernetesDelete("ns", $self->namespace, $self->namespace ) ;
 
 };
