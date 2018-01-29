@@ -2,6 +2,11 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: nginx-config
+  labels:
+    app: auction
+    tier: backend
+    type: webServer
+    impl: nginx
 data: 
   WORKERCONNECTIONS : "100"
   PERSERVERCONNECTIONS: "25000"

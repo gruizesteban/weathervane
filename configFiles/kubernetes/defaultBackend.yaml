@@ -4,12 +4,14 @@ metadata:
   name: default-http-backend
   labels:
     app: default-http-backend
+    type: appInstance
 spec:
   replicas: 1
   template:
     metadata:
       labels:
         app: default-http-backend
+        type: appInstance
     spec:
       terminationGracePeriodSeconds: 60
       containers:
@@ -38,6 +40,7 @@ metadata:
   name: default-http-backend
   labels:
     app: default-http-backend
+    type: appInstance
 spec:
   ports:
   - port: 80
