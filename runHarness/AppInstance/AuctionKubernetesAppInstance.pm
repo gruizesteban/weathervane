@@ -59,14 +59,28 @@ override 'initialize' => sub {
 
 };
 
-sub setHost {
+override 'setHost' => sub {
 	my ($self, $host) = @_;
 	my $logger = get_logger("Weathervane::AppInstance::AuctionKubernetesAppInstance");
 	
 	$self->host($host);
+		
+};
+
+override 'startServices' => sub {
+	my ( $self, $serviceTier, $setupLogDir ) = @_;
+	my $logger = get_logger("Weathervane::AppInstance::AppInstance");
+	my $users  = $self->users;
+	my $impl         = $self->getParamValue('workloadImpl');
+
+	# If in interactive mode, then configure services for maxUsers load
+	my $interactive = $self->getParamValue('interactive');
+	my $maxUsers    = $self->dataManager->getParamValue('maxUsers');
+	if ( $interactive && ( $maxUsers > $users ) ) {
+		$users = $maxUsers;
+	}
 
 	my $namespace = $self->namespace;
-	
 	# Create the namespace and the namespace-wide resources
 	my $configDir        = $self->getParamValue('configDir');
 	open( FILEIN,  "$configDir/kubernetes/namespace.yaml" ) or die "$configDir/kubernetes/namespace.yaml: $!\n";
@@ -84,28 +98,57 @@ sub setHost {
 	close FILEOUT;
 	$host->kubernetesApply("/tmp/namespace-$namespace.yaml", $self->namespace);
 	
-	# Create the tls secret for the ingress controller
-	$logger->debug("Create tls secret for namespace ", $self->namespace);
-	my $cmd = "kubectl create secret tls tls-secret --key $configDir/host/centos7/tls/private/weathervane.key --cert $configDir/host/centos7/tls/private/weathervane.crt --namespace=$namespace 2>&1"; 
-	my $outString = `$cmd`;
-	$logger->debug("Command: $cmd");
-	$logger->debug("Output: $outString");
+	# When the backend is starting, start the appInstance specific services
+	if ($serviceTier eq "backend") {
 	
-	# Create the default backend in the namespace
-	$host->kubernetesApply("$configDir/kubernetes/defaultBackend.yaml", $self->namespace);
+		# Create the tls secret for the ingress controller
+		$logger->debug("Create tls secret for namespace ", $self->namespace);
+		my $cmd = "kubectl create secret tls tls-secret --key $configDir/host/centos7/tls/private/weathervane.key --cert $configDir/host/centos7/tls/private/weathervane.crt --namespace=$namespace 2>&1"; 
+		my $outString = `$cmd`;
+		$logger->debug("Command: $cmd");
+		$logger->debug("Output: $outString");
 	
-	# Create the ingress controller in the namespace
-	$host->kubernetesApply("$configDir/kubernetes/ingressControllerNginx.yaml", $self->namespace);
+		# Create the default backend in the namespace
+		$host->kubernetesApply("$configDir/kubernetes/defaultBackend.yaml", $self->namespace);
 	
-	# Create the service for the ingress controller
-	$host->kubernetesApply("$configDir/kubernetes/ingressControllerNginxService.yaml", $self->namespace);
+		# Create the ingress controller in the namespace
+		$host->kubernetesApply("$configDir/kubernetes/ingressControllerNginx.yaml", $self->namespace);
 	
-	# Create the ingress for the appInstance
-	$host->kubernetesApply("$configDir/kubernetes/auctionIngress.yaml", $self->namespace);
+		# Create the service for the ingress controller
+		$host->kubernetesApply("$configDir/kubernetes/ingressControllerNginxService.yaml", $self->namespace);
+	
+		# Create the ingress for the appInstance
+		$host->kubernetesApply("$configDir/kubernetes/auctionIngress.yaml", $self->namespace);
 		
-}
+	}
 
-sub cleanup {
+	$logger->debug(
+		"startServices for serviceTier $serviceTier, workload ",
+		$self->getParamValue('workloadNum'),
+		", appInstance ",
+		$self->getParamValue('appInstanceNum'),
+		", impl = $impl", 
+		" users = $users",
+		" setupLogDir = $setupLogDir"
+	);
+
+	my $serviceTiersHashRef = $WeathervaneTypes::workloadToServiceTypes{$impl};
+	my $serviceTypes = $serviceTiersHashRef->{$serviceTier};
+	$logger->debug("startServices for serviceTier $serviceTier, serviceTypes = @$serviceTypes");
+	foreach my $serviceType (@$serviceTypes) {
+		my $servicesRef = $self->getActiveServicesByType($serviceType);
+		if ($#{$servicesRef} >= 0) {
+			# Use the first instance of the service for starting the 
+			# service instances
+			my $serviceRef = $servicesRef->[0];
+			$serviceRef->start($serviceType, $users, $setupLogDir);
+		} else {
+			next;
+		}
+	}
+};
+
+override 'cleanup' => sub {
 	my ( $self, $cleanupLogDir ) = @_;
 	my $logger = get_logger("Weathervane::AppInstance::AuctionKubernetesAppInstance");
 	
@@ -114,7 +157,7 @@ sub cleanup {
 	$cluster->kubernetesDeleteAllWithLabelAndResourceType("type=appInstance", "ingress", $self->namespace);
 #	$cluster->kubernetesDelete("ns", $self->namespace, $self->namespace ) ;
 
-}
+};
 
 override 'getWwwIpAddrsRef' => sub {
 	my ($self) = @_;
