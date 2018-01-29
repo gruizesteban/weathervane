@@ -59,13 +59,14 @@ override 'initialize' => sub {
 
 };
 
-override 'setHost' => sub {
+sub setHost {
+	
 	my ($self, $host) = @_;
 	my $logger = get_logger("Weathervane::AppInstance::AuctionKubernetesAppInstance");
 	
 	$self->host($host);
 		
-};
+}
 
 override 'startServices' => sub {
 	my ( $self, $serviceTier, $setupLogDir ) = @_;
