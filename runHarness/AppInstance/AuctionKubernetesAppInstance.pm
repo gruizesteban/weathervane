@@ -122,6 +122,15 @@ override 'startServices' => sub {
 		# Create the ingress for the appInstance
 		$cluster->kubernetesApply("$configDir/kubernetes/auctionIngress.yaml", $self->namespace);
 		
+		# Need to wait until ingress has IP address
+		my $sleepInterval = 30;
+		my $numIntervals = 1;
+		sleep $sleepInterval;
+		while (!$cluster->kubernetesGetIngressIp("type=appInstance", $self->namespace)) {
+			sleep $sleepInterval;
+			$numIntervals++;
+		}
+		logger->error("Got ingress IP after $numIntervals intervals, ",$numIntervals*$sleepInterval," seconds.");
 	}
 
 	$logger->debug(
