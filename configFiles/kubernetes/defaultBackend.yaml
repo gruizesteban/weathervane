@@ -13,7 +13,6 @@ spec:
         app: default-http-backend
         type: appInstance
     spec:
-      terminationGracePeriodSeconds: 60
       containers:
       - name: default-http-backend
         image: gcr.io/google_containers/defaultbackend:1.4
