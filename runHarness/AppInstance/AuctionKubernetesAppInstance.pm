@@ -81,6 +81,7 @@ override 'startServices' => sub {
 	}
 
 	my $namespace = $self->namespace;
+	my $cluster = $self->host;
 	# Create the namespace and the namespace-wide resources
 	my $configDir        = $self->getParamValue('configDir');
 	open( FILEIN,  "$configDir/kubernetes/namespace.yaml" ) or die "$configDir/kubernetes/namespace.yaml: $!\n";
@@ -96,7 +97,7 @@ override 'startServices' => sub {
 	}
 	close FILEIN;
 	close FILEOUT;
-	$host->kubernetesApply("/tmp/namespace-$namespace.yaml", $self->namespace);
+	$cluster->kubernetesApply("/tmp/namespace-$namespace.yaml", $self->namespace);
 	
 	# When the backend is starting, start the appInstance specific services
 	if ($serviceTier eq "backend") {
@@ -109,16 +110,16 @@ override 'startServices' => sub {
 		$logger->debug("Output: $outString");
 	
 		# Create the default backend in the namespace
-		$host->kubernetesApply("$configDir/kubernetes/defaultBackend.yaml", $self->namespace);
+		$cluster->kubernetesApply("$configDir/kubernetes/defaultBackend.yaml", $self->namespace);
 	
 		# Create the ingress controller in the namespace
-		$host->kubernetesApply("$configDir/kubernetes/ingressControllerNginx.yaml", $self->namespace);
+		$cluster->kubernetesApply("$configDir/kubernetes/ingressControllerNginx.yaml", $self->namespace);
 	
 		# Create the service for the ingress controller
-		$host->kubernetesApply("$configDir/kubernetes/ingressControllerNginxService.yaml", $self->namespace);
+		$cluster->kubernetesApply("$configDir/kubernetes/ingressControllerNginxService.yaml", $self->namespace);
 	
 		# Create the ingress for the appInstance
-		$host->kubernetesApply("$configDir/kubernetes/auctionIngress.yaml", $self->namespace);
+		$cluster->kubernetesApply("$configDir/kubernetes/auctionIngress.yaml", $self->namespace);
 		
 	}
 
