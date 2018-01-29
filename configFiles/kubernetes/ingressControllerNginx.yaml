@@ -7,20 +7,7 @@ metadata:
     type: appInstance
 data:
   ssl-redirect: "false"
----
-kind: ConfigMap
-apiVersion: v1
-metadata:
-  name: ingress-controller-nginx-tcp-services
-  labels:
-    type: appInstance
----
-kind: ConfigMap
-apiVersion: v1
-metadata:
-  name: ingress-controller-nginx-udp-services
-  labels:
-    type: appInstance
+  enable-underscores-in-headers: "true"
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -59,8 +46,6 @@ spec:
             - /nginx-ingress-controller
             - --default-backend-service=$(POD_NAMESPACE)/default-http-backend
             - --configmap=$(POD_NAMESPACE)/ingress-controller-nginx-conf
-            - --tcp-services-configmap=$(POD_NAMESPACE)/ingress-controller-nginx-tcp-services
-            - --udp-services-configmap=$(POD_NAMESPACE)/ingress-controller-nginx-udp-services
             - --default-ssl-certificate=$(POD_NAMESPACE)/tls-secret
             - --annotations-prefix=nginx.ingress.kubernetes.io
           env:
