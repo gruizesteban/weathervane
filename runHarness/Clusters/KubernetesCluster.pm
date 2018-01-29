@@ -214,7 +214,7 @@ sub kubernetesGetIngressIp {
 	
 	my @ips = split /\n/, $outString;
 	if ($#ips < 0) {
-		$logger->error("kubernetesGetIngressIp: There are no ingresses with label $labelString in namespace $namespace");
+		$logger->debug("kubernetesGetIngressIp: There are no ingresses with label $labelString in namespace $namespace");
 		return "";
 	}
 	
