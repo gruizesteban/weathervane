@@ -122,26 +122,6 @@ sub configure {
 sub getLogFiles {
 	my ( $self, $destinationPath ) = @_;
 	my $logger = get_logger("Weathervane::Services::TomcatDockerService");
-	$logger->debug("getLogFiles");
-
-	my $tomcatCatalinaBase = $self->getParamValue('tomcatCatalinaBase');
-	my $name               = $self->getParamValue('dockerName');
-	my $hostname           = $self->host->hostName;
-
-	my $logpath = "$destinationPath/$name";
-	if ( !( -e $logpath ) ) {
-		`mkdir -p $logpath`;
-	}
-
-	my $logName = "$logpath/TomcatDockerLogs-$hostname-$name.log";
-
-	my $applog;
-	open( $applog, ">$logName" )
-	  || die "Error opening /$logName:$!";
-
-	print $applog $self->host->dockerGetLogs( $applog, $name );
-
-	close $applog;
 
 }
 
@@ -158,24 +138,6 @@ sub parseLogFiles {
 
 sub getConfigFiles {
 	my ( $self, $destinationPath ) = @_;
-	my $tomcatCatalinaBase = $self->getParamValue('tomcatCatalinaBase');
-	my $name               = $self->getParamValue('dockerName');
-	my $hostname           = $self->host->hostName;
-
-	my $logpath = "$destinationPath/$name";
-	if ( !( -e $logpath ) ) {
-		`mkdir -p $logpath`;
-	}
-
-	my $logName = "$logpath/GetConfigFilesTomcatDocker-$hostname-$name.log";
-
-	my $applog;
-	open( $applog, ">$logName" )
-	  || die "Error opening /$logName:$!";
-
-	$self->host->dockerScpFileFrom( $applog, $name, "$tomcatCatalinaBase/conf/*",        "$logpath/." );
-	$self->host->dockerScpFileFrom( $applog, $name, "$tomcatCatalinaBase/bin/setenv.sh", "$logpath/." );
-	close $applog;
 
 }
 

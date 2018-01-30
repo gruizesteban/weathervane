@@ -75,26 +75,6 @@ sub configure {
 
 sub getLogFiles {
 	my ( $self, $destinationPath ) = @_;
-	
-	my $name     = $self->getParamValue('dockerName');
-	my $hostname = $self->host->hostName;
-
-	my $logpath = "$destinationPath/$name";
-	if ( !( -e $logpath ) ) {
-		`mkdir -p $logpath`;
-	}
-
-	my $logName = "$logpath/ZookeeperDockerLogs-$hostname-$name.log";
-
-	my $applog;
-	open( $applog, ">$logName" )
-	  || die "Error opening $logName:$!";
-
-	my $logContents = $self->host->dockerGetLogs( $applog, $name );
-
-	print $applog $logContents;
-
-	close $applog;
 
 
 }
@@ -112,25 +92,6 @@ sub parseLogFiles {
 sub getConfigFiles {
 	my ( $self, $destinationPath ) = @_;
 	
-	my $name     = $self->getParamValue('dockerName');
-	my $hostname = $self->host->hostName;
-	my $zookeeperRoot    = $self->getParamValue('zookeeperRoot');
-
-	my $logpath = "$destinationPath/$name";
-	if ( !( -e $logpath ) ) {
-		`mkdir -p $logpath`;
-	}
-
-	my $logName = "$logpath/GetConfigFilesZookeeperDocker-$hostname-$name.log";
-
-	my $applog;
-	open( $applog, ">$logName" )
-	  || die "Error opening /$logName:$!";
-
-	$self->host->dockerScpFileFrom( $applog, $name, "$zookeeperRoot/conf/zoo.cfg", "$logpath/." );
-
-	close $applog;
-
 }
 
 sub getConfigSummary {

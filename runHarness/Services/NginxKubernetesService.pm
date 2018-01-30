@@ -97,25 +97,6 @@ sub configure {
 sub getLogFiles {
 	my ( $self, $destinationPath ) = @_;
 
-	my $name = $self->getParamValue('dockerName');
-	my $hostname         = $self->host->hostName;
-
-	my $logpath = "$destinationPath/$name";
-	if ( !( -e $logpath ) ) {
-		`mkdir -p $logpath`;
-	}
-
-	my $logName          = "$logpath/NginxDockerLogs-$hostname-$name.log";
-
-	my $applog;
-	open( $applog, ">$logName" )
-	  || die "Error opening $logName:$!";
-	  	
-	my $logContents = $self->host->dockerGetLogs($applog, $name); 
-		
-	print $applog $logContents;
-	
-	close $applog;
 
 }
 
@@ -134,26 +115,6 @@ sub parseLogFiles {
 
 sub getConfigFiles {
 	my ( $self, $destinationPath ) = @_;
-
-	my $nginxServerRoot  = $self->getParamValue('nginxServerRoot');
-	my $name = $self->getParamValue('dockerName');
-	my $hostname         = $self->host->hostName;
-
-
-	my $logpath = "$destinationPath/$name";
-	if ( !( -e $logpath ) ) {
-		`mkdir -p $logpath`;
-	}
-
-	my $logName          = "$logpath/GetConfigFilesNginxDocker-$hostname-$name.log";
-
-	my $applog;
-	open( $applog, ">$logName" )
-	  || die "Error opening /$logName:$!";
-
-	$self->host->dockerScpFileFrom($applog, $name, "$nginxServerRoot/*.conf", "$logpath/.");
-	$self->host->dockerScpFileFrom($applog, $name, "$nginxServerRoot/conf.d/*.conf", "$logpath/.");
-	close $applog;
 
 }
 

@@ -100,24 +100,7 @@ sub configure {
 sub getLogFiles {
 	my ( $self, $destinationPath ) = @_;
 
-	my $name = $self->getParamValue('dockerName');
-	my $hostname         = $self->host->hostName;
 
-	my $logpath = "$destinationPath/$name";
-	if ( !( -e $logpath ) ) {
-		`mkdir -p $logpath`;
-	}
-
-	my $logName          = "$logpath/RabbitmqDockerLogs-$hostname-$name.log";
-
-	my $applog;
-	open( $applog, ">$logName" )
-	  || die "Error opening $logName:$!";
-	  	
-	my $logContents = $self->host->dockerGetLogs($applog, $self->getParamValue('dockerName')); 
-	print $applog $logContents;
-	
-	close $applog;
 }
 
 sub cleanLogFiles {
@@ -134,24 +117,6 @@ sub parseLogFiles {
 
 sub getConfigFiles {
 	my ( $self, $destinationPath ) = @_;
-	my $hostname         = $self->host->hostName;
-	my $name = $self->getParamValue('dockerName');
-
-	my $logpath = "$destinationPath/$name";
-	if ( !( -e $logpath ) ) {
-		`mkdir -p $logpath`;
-	}
-	my $logName          = "$logpath/GetConfigFilesRabbitmqDocker-$hostname-$name.log";
-
-	my $applog;
-	open( $applog, ">$logName" )
-	  || die "Error opening /$logName:$!";
-
-	$self->host->dockerExec($applog, $name, "rabbitmqctl report > /tmp/${hostname}_rabbitmqctl_report.txt");
-
-	$self->host->dockerScpFileFrom($applog, $name, "/tmp/{hostname}_rabbitmqctl_report.txt", "$logpath/.");
-	$self->host->dockerScpFileFrom($applog, $name, "/etc/rabbitmq/*", "$logpath/.");
-	close $applog;
 	
 }
 
