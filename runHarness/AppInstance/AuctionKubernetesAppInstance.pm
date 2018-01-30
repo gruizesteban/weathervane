@@ -130,7 +130,7 @@ override 'startServices' => sub {
 			sleep $sleepInterval;
 			$numIntervals++;
 		}
-		$logger->error("Got ingress IP after $numIntervals intervals, ",$numIntervals*$sleepInterval," seconds.");
+		$logger->debug("Got ingress IP after $numIntervals intervals, ",$numIntervals*$sleepInterval," seconds.");
 	}
 
 	$logger->debug(
@@ -155,9 +155,7 @@ override 'startServices' => sub {
 			$serviceRef->start($serviceType, $users, $setupLogDir);
 		} else {
 			next;
-		}
-		
-		sleep 30;
+		}		
 	}
 };
 
