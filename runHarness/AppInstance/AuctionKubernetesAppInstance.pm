@@ -344,6 +344,11 @@ override 'redeploy' => sub {
 	$self->imagePullPolicy("Always");
 };
 
+override 'getHostStatsSummary' => sub {
+	my ( $self, $csvRef, $statsLogPath, $filePrefix, $prefix ) = @_;
+	
+};
+
 override 'startStatsCollection' => sub {
 	my ( $self ) = @_;
 

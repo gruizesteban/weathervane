@@ -167,8 +167,6 @@ sub clearDataBeforeStart {
 override 'sanityCheck' => sub {
 	my ($self, $cleanupLogDir) = @_;
 	my $console_logger = get_logger("Console");
-	my $sshConnectString = $self->host->sshConnectString;
-	my $hostname         = $self->host->hostName;
 
 	return 1;	
 };

@@ -154,68 +154,6 @@ sub getStatsSummary {
 	my ( $self, $statsLogPath, $users ) = @_;
 	tie( my %csv, 'Tie::IxHash' );
 
-	my $weathervaneHome = $self->getParamValue('weathervaneHome');
-	my $gcviewerDir     = $self->getParamValue('gcviewerDir');
-	if ( !( $gcviewerDir =~ /^\// ) ) {
-		$gcviewerDir = $weathervaneHome . "/" . $gcviewerDir;
-	}
-
-	# Only parseGc if gcviewer is present
-	if ( -f "$gcviewerDir/gcviewer-1.34-SNAPSHOT.jar" ) {
-
-		open( HOSTCSVFILE, ">>$statsLogPath/tomcat_gc_summary.csv" )
-		  or die "Can't open $statsLogPath/tomcat_gc_summary.csv : $! \n";
-		my $addedHeaders = 0;
-
-		tie( my %accumulatedCsv, 'Tie::IxHash' );
-		my $serviceType = $self->getParamValue('serviceType');
-		my $servicesRef = $self->appInstance->getActiveServicesByType($serviceType);
-		my $numServices = $#{$servicesRef} + 1;
-		my $csvHashRef;
-		foreach my $service (@$servicesRef) {
-			my $name    = $service->getParamValue('dockerName');
-			my $logPath = $statsLogPath . "/" . $service->host->hostName . "/$name";
-			$csvHashRef = ParseGC::parseGCLog( $logPath, "", $gcviewerDir );
-
-			if ( !$addedHeaders ) {
-				print HOSTCSVFILE "Hostname,IP Addr";
-				foreach my $key ( keys %$csvHashRef ) {
-					print HOSTCSVFILE ",$key";
-				}
-				print HOSTCSVFILE "\n";
-
-				$addedHeaders = 1;
-			}
-
-			print HOSTCSVFILE $service->host->hostName . "," . $service->host->ipAddr;
-			foreach my $key ( keys %$csvHashRef ) {
-				print HOSTCSVFILE "," . $csvHashRef->{$key};
-				if ( $csvHashRef->{$key} eq "na" ) {
-					next;
-				}
-				if ( !( exists $accumulatedCsv{"tomcat_$key"} ) ) {
-					$accumulatedCsv{"tomcat_$key"} = $csvHashRef->{$key};
-				}
-				else {
-					$accumulatedCsv{"tomcat_$key"} += $csvHashRef->{$key};
-				}
-			}
-			print HOSTCSVFILE "\n";
-
-		}
-
-		# Now turn the total into averages
-		foreach my $key ( keys %$csvHashRef ) {
-			if ( exists $accumulatedCsv{"tomcat_$key"} ) {
-				$accumulatedCsv{"tomcat_$key"} /= $numServices;
-			}
-		}
-
-		# Now add the key/value pairs to the returned csv
-		@csv{ keys %accumulatedCsv } = values %accumulatedCsv;
-
-		close HOSTCSVFILE;
-	}
 	return \%csv;
 }
 
