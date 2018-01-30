@@ -1592,7 +1592,11 @@ sub getLogFiles {
 					exit(-1);
 				}
 				elsif ( $pid == 0 ) {
-					my $destinationPath = $newBaseDestinationPath . "/" . $serviceType . "/" . $service->host->hostName;
+					my $name = $service->host->clusterName;
+					if (!$name) {
+						$name = $service->host->hostName;
+					}
+					my $destinationPath = $newBaseDestinationPath . "/" . $serviceType . "/" . $name;
 					if ( !( -e $destinationPath ) ) {
 						`mkdir -p $destinationPath`;
 					}
@@ -1639,7 +1643,11 @@ sub getConfigFiles {
 					exit(-1);
 				}
 				elsif ( $pid == 0 ) {
-					my $destinationPath = $newBaseDestinationPath . "/" . $serviceType . "/" . $service->host->hostName;
+					my $name = $service->host->clusterName;
+					if (!$name) {
+						$name = $service->host->hostName;
+					}
+					my $destinationPath = $newBaseDestinationPath . "/" . $serviceType . "/" . $name;
 					if ( !( -e $destinationPath ) ) {
 						`mkdir -p $destinationPath`;
 					}
@@ -1772,10 +1780,13 @@ sub getHostStatsSummary {
 		my $servicesListRef = $self->getActiveServicesByType($serviceType);
 
 		foreach my $service (@$servicesListRef) {
-			if ($service->host->getParamValue('vicHost')) {
-				return;
+			my $hostname = $service->host->clusterName;
+			if (!$hostname) {
+				$hostname = $service->host->hostName;
+				if ($service->host->getParamValue('vicHost')) {
+					return;
+				}
 			}
-			my $hostname = $service->host->hostName;
 			if (   ( !exists $csvRefByHostname{$hostname} )
 				|| ( !defined $csvRefByHostname{$hostname} ) )
 			{
