@@ -278,7 +278,7 @@ sub kubernetesAreAllPodRunning {
 	$logger->debug("Command: $cmd");
 	$logger->debug("Output: $outString");
 
-	my @stati = split /\n/, $outString;
+	my @stati = split /\s+/, $outString;
 	if ($#stati < 0) {
 		$logger->debug("kubernetesAreAllPodRunning: There are no pods with label $podLabelString in namespace $namespace");
 		return 0;
